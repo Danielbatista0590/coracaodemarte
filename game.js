@@ -90,8 +90,12 @@ class Fase extends Phaser.Scene {
 
     // inimigos
     this.inimigos = this.physics.add.group();
-    [[700, H - 80], [1200, H - 80], [1250, 320], [1500, H - 80], [1900, H - 80], [2100, 280], [2300, H - 80], [2600, H - 80], [2800, H - 80], [2750, 300]]
-      .forEach(([x, y]) => this.criarInimigo(x, y));
+    [[700, H - 80], [1200, H - 80], [1250, 320], [1500, H - 80], [1900, H - 80], [2100, 280], [2300, H - 80], [2600, H - 80], [2750, 300], [1050, H - 80], [1750, 320]]
+      .forEach(([x, y]) => this.criarInimigo(x, y, 'sombra'));
+    [[900, 200], [1400, 150], [2000, 180], [2450, 140], [2650, 200]].forEach(([x, y]) => this.criarInimigo(x, y, 'morcego'));
+    [[680, 260], [1500, 230], [2400, 210]].forEach(([x, y]) => this.criarInimigo(x, y, 'cuspidor'));
+    this.chefao = this.criarInimigo(2950, H - 140, 'chefao');
+    this.gosmas = this.physics.add.group({ allowGravity: false });
 
     // projéteis
     this.pedras = this.physics.add.group({ allowGravity: false });
@@ -106,7 +110,12 @@ class Fase extends Phaser.Scene {
     });
     this.physics.add.collider(this.pedras, this.chao, (pedra) => pedra.destroy());
     this.physics.add.overlap(this.jogadores, this.inimigos, (j, ini) => this.levarDano(j, ini));
-    this.physics.add.overlap(this.jogadores, this.chegada, () => this.vitoria());
+    this.physics.add.overlap(this.jogadores, this.chegada, () => {
+      if (this.chefao.active) { if (!this.avisouChefao) { this.avisouChefao = true; this.texto(3100, H - 220, 'Derrote o SOMBRÃO primeiro!', '#ff5d73'); this.time.delayedCall(1500, () => this.avisouChefao = false); } return; }
+      this.vitoria();
+    });
+    this.physics.add.overlap(this.jogadores, this.gosmas, (j, g) => { if (!g.active) return; g.destroy(); this.levarDano(j, g, true); });
+    this.physics.add.collider(this.gosmas, this.chao, (g) => g.destroy());
 
     // câmera segue o ponto médio entre os jogadores
     this.alvoCamera = this.add.zone(0, 0, 1, 1);
@@ -163,6 +172,12 @@ class Fase extends Phaser.Scene {
     // sombra: bolha roxa com olhinhos
     g.fillStyle(0x2a1f3d).fillEllipse(20, 22, 40, 36).fillStyle(0xfff36b).fillCircle(13, 18, 4).fillCircle(27, 18, 4);
     g.generateTexture('sombra', 40, 40).clear();
+    g.fillStyle(0x2a1f3d).fillEllipse(20, 14, 22, 18).fillTriangle(0, 4, 12, 12, 6, 20).fillTriangle(40, 4, 28, 12, 34, 20)
+     .fillStyle(0xff6b6b).fillCircle(16, 12, 3).fillCircle(24, 12, 3);
+    g.generateTexture('morcego', 40, 26).clear();
+    g.fillStyle(0x2f5d3a).fillRoundedRect(4, 8, 32, 30, 10).fillStyle(0xb6ff6b).fillCircle(20, 18, 6).fillStyle(0x000000).fillCircle(20, 18, 3);
+    g.generateTexture('cuspidor', 40, 40).clear();
+    g.fillStyle(0x9dff4a).fillCircle(7, 7, 7); g.generateTexture('gosma', 14, 14).clear();
     Object.entries(CHARS).forEach(([id, c]) => {
       g.fillStyle(c.cor).fillRoundedRect(4, 14, 24, 30, 6);     // corpo
       g.fillStyle(0xf2c9a0).fillCircle(16, 10, 10);              // cabeça
@@ -186,13 +201,95 @@ class Fase extends Phaser.Scene {
     return j;
   }
 
-  criarInimigo(x, y) {
-    const s = this.inimigos.create(x, y, 'sombra');
-    s.vida = 3; s.velocidade = Phaser.Math.Between(50, 90);
-    s.setVelocityX(s.velocidade * (Math.random() < 0.5 ? -1 : 1));
+  criarInimigo(x, y, tipo) {
+    const s = this.inimigos.create(x, y, tipo === 'chefao' ? 'sombra' : tipo);
+    s.tipo = tipo;
     s.setCollideWorldBounds(true).setBounce(0);
-    this.tweens.add({ targets: s, scaleY: 0.9, duration: 400, yoyo: true, repeat: -1 });
+    if (tipo === 'sombra') {
+      s.vida = 4; s.velocidade = Phaser.Math.Between(70, 110);
+      s.setVelocityX(s.velocidade * (Math.random() < 0.5 ? -1 : 1));
+      this.tweens.add({ targets: s, scaleY: 0.9, duration: 400, yoyo: true, repeat: -1 });
+    } else if (tipo === 'morcego') {
+      s.vida = 2; s.velocidade = 0; s.body.setAllowGravity(false);
+      s.casaX = x; s.casaY = y; s.estado = 'voando'; s.relogio = Phaser.Math.Between(0, 1000);
+    } else if (tipo === 'cuspidor') {
+      s.vida = 3; s.velocidade = 0; s.recarga = Phaser.Math.Between(1000, 2000);
+    } else if (tipo === 'chefao') {
+      s.vida = s.vidaMax = 30; s.velocidade = 90; s.setScale(2.6).setTint(0xb04aff);
+      s.body.setSize(36, 32).setOffset(2, 6); s.recarga = 2000; s.ativado = false;
+    }
+    return s;
   }
+
+  maisPerto(x, y) {
+    let melhor = null, d = Infinity;
+    this.jogadores.forEach(j => { if (j.caido) return; const dd = Phaser.Math.Distance.Between(x, y, j.x, j.y); if (dd < d) { d = dd; melhor = j; } });
+    return melhor ? { j: melhor, d } : null;
+  }
+
+  cuspir(s, alvo, vel = 320) {
+    const g = this.gosmas.create(s.x, s.y - 10, 'gosma');
+    const ang = Phaser.Math.Angle.Between(s.x, s.y, alvo.x, alvo.y);
+    g.setVelocity(Math.cos(ang) * vel, Math.sin(ang) * vel);
+    this.time.delayedCall(2500, () => g.active && g.destroy());
+  }
+
+  pensarInimigo(s, delta) {
+    const alvo = this.maisPerto(s.x, s.y);
+    if (s.tipo === 'sombra') {
+      // persegue quem chegar perto
+      if (alvo && alvo.d < 260 && Math.abs(alvo.j.y - s.y) < 80 && s.body.blocked.down) {
+        s.setVelocityX(Math.sign(alvo.j.x - s.x) * s.velocidade * 1.6);
+      } else if (Math.abs(s.body.velocity.x) < 10) s.setVelocityX(s.velocidade);
+      if (s.body.blocked.left) s.setVelocityX(s.velocidade);
+      if (s.body.blocked.right) s.setVelocityX(-s.velocidade);
+      if (s.body.blocked.down) {
+        const frente = s.x + (s.body.velocity.x > 0 ? 24 : -24);
+        const temChao = this.chao.getChildren().some(p => frente > p.x && frente < p.x + p.width && Math.abs(p.y - s.body.bottom) < 6);
+        if (!temChao) s.setVelocityX(-s.body.velocity.x);
+      }
+      s.setFlipX(s.body.velocity.x < 0);
+    } else if (s.tipo === 'morcego') {
+      s.relogio += delta;
+      if (s.estado === 'voando') {
+        s.setVelocity(Math.cos(s.relogio / 500) * 80, Math.sin(s.relogio / 300) * 40 + (s.casaY - s.y));
+        if (alvo && alvo.d < 300 && s.relogio > 1500) {
+          s.estado = 'mergulho'; s.relogio = 0;
+          const ang = Phaser.Math.Angle.Between(s.x, s.y, alvo.j.x, alvo.j.y);
+          s.setVelocity(Math.cos(ang) * 380, Math.sin(ang) * 380);
+        }
+      } else if (s.relogio > 900 || s.body.blocked.down) {
+        s.estado = 'voando'; s.relogio = 0; s.casaX = s.x;
+      }
+      s.setFlipX(s.body.velocity.x < 0);
+    } else if (s.tipo === 'cuspidor') {
+      s.recarga -= delta;
+      if (alvo) s.setFlipX(alvo.j.x < s.x);
+      if (alvo && alvo.d < 480 && s.recarga <= 0) {
+        s.recarga = 1800; this.cuspir(s, alvo.j);
+        this.tweens.add({ targets: s, scaleX: 1.2, scaleY: 0.8, duration: 100, yoyo: true });
+      }
+    } else if (s.tipo === 'chefao') {
+      if (!s.ativado) {
+        if (alvo && alvo.d < 500) { s.ativado = true; this.texto(s.x, s.y - 90, 'O SOMBRÃO ACORDOU!', '#ff5d73'); this.cameras.main.shake(300, 0.01); }
+        return;
+      }
+      s.recarga -= delta;
+      const raiva = s.vida < s.vidaMax / 2; // metade da vida: fica mais rápido
+      if (alvo && s.body.blocked.down) s.setVelocityX(Math.sign(alvo.j.x - s.x) * s.velocidade * (raiva ? 1.7 : 1));
+      if (alvo && s.recarga <= 0 && s.body.blocked.down) {
+        s.recarga = raiva ? 1300 : 2000;
+        if (Math.random() < 0.5) { s.setVelocityY(-650); s.pulando = true; }
+        else { for (let a = -1; a <= 1; a++) this.cuspir(s, { x: alvo.j.x, y: alvo.j.y + a * 90 }, 300); }
+      }
+      if (s.pulando && s.body.blocked.down && s.body.velocity.y >= 0) {
+        s.pulando = false; this.cameras.main.shake(200, 0.012);
+        this.jogadores.forEach(j => { if (!j.caido && j.body.blocked.down && Math.abs(j.x - s.x) < 180) this.levarDano(j, s, true); });
+      }
+      s.setFlipX(s.body.velocity.x < 0);
+    }
+  }
+
 
   pad(j) {
     const p = this.input.gamepad && this.input.gamepad.getPad(j.idx);
@@ -205,18 +302,7 @@ class Fase extends Phaser.Scene {
     const vivos = this.jogadores.filter(j => !j.caido);
     vivos.forEach(j => this.controlarJogador(j, delta));
 
-    // inimigos patrulham e viram na borda/parede
-    this.inimigos.children.each(s => {
-      if (!s.active) return;
-      if (s.body.blocked.left) s.setVelocityX(s.velocidade);
-      if (s.body.blocked.right) s.setVelocityX(-s.velocidade);
-      if (s.body.blocked.down) {
-        const frente = s.x + (s.body.velocity.x > 0 ? 24 : -24);
-        const temChao = this.chao.getChildren().some(p => frente > p.x && frente < p.x + p.width && Math.abs(p.y - s.body.bottom) < 6);
-        if (!temChao) s.setVelocityX(-s.body.velocity.x);
-      }
-      s.setFlipX(s.body.velocity.x < 0);
-    });
+    this.inimigos.getChildren().slice().forEach(s => s.active && this.pensarInimigo(s, delta));
 
     // câmera
     if (vivos.length) {
@@ -229,7 +315,7 @@ class Fase extends Phaser.Scene {
 
     this.hud.setText(this.jogadores.map(j =>
       `${CHARS[j.id].nome}: ${j.caido ? '💫 voltando...' : '❤'.repeat(j.vida) + '♡'.repeat(j.vidaMax - j.vida)}`
-    ).join('     ') + `     Sombras: ${this.inimigos.countActive()}`);
+    ).join('     ') + (this.chefao.active && this.chefao.ativado ? `     SOMBRÃO: ${'█'.repeat(Math.ceil(this.chefao.vida / 3))}` : ''));
   }
 
   controlarJogador(j, delta) {
@@ -317,8 +403,9 @@ class Fase extends Phaser.Scene {
     s.vida -= dano;
     s.setTint(0xffffff);
     this.time.delayedCall(80, () => s.active && s.clearTint());
-    s.setVelocity(200 * dir, -180);
-    this.time.delayedCall(250, () => s.active && s.setVelocityX(s.velocidade * dir));
+    if (s.tipo === 'chefao') { s.setVelocityX(80 * dir); }
+    else if (s.tipo === 'morcego') { s.setVelocity(220 * dir, -120); s.estado = 'voando'; s.relogio = 0; }
+    else { s.setVelocity(200 * dir, -180); this.time.delayedCall(250, () => s.active && s.setVelocityX(s.velocidade * dir)); }
     if (s.vida <= 0) this.confete(s);
   }
 
@@ -334,9 +421,9 @@ class Fase extends Phaser.Scene {
     s.destroy();
   }
 
-  levarDano(j, s) {
+  levarDano(j, s, semPisao) {
     if (j.invencivel > 0 || j.caido) return;
-    if (j.body.velocity.y > 100 && j.y < s.y - 15) { // pulou em cima
+    if (!semPisao && s.tipo !== 'chefao' && j.body.velocity.y > 100 && j.y < s.y - 15) { // pulou em cima
       j.setVelocityY(-400); this.acertar(s, 1, j.direcao); return;
     }
     j.vida--; j.invencivel = 1200;
