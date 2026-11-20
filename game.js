@@ -29,7 +29,13 @@ class Menu extends Phaser.Scene {
       const op = this.add.text(W / 2, 260 + i * 56, t, { fontFamily: 'Arial', fontSize: 26, color: '#ffffff', backgroundColor: '#2b2350', padding: { x: 14, y: 8 } })
         .setOrigin(0.5).setInteractive({ useHandCursor: true });
       op.on('pointerdown', () => {
-        if (this.sys.game.device.input.touch && !this.scale.isFullscreen) { try { this.scale.startFullscreen(); } catch (e) {} }
+        if (this.sys.game.device.input.touch) {
+          try {
+            if (!this.scale.isFullscreen) this.scale.startFullscreen();
+            // trava em paisagem (funciona no Android/Chrome; no iPhone é ignorado)
+            setTimeout(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }, 300);
+          } catch (e) {}
+        }
         this.scene.start('Fase', { jogadores: escolhas[i] });
       });
     });

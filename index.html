@@ -8,14 +8,15 @@
     html, body { margin: 0; height: 100%; background: #0d0b1a; display: flex; align-items: center; justify-content: center; }
     canvas { image-rendering: pixelated; touch-action: none; }
     body { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; overflow: hidden; }
-    #girar { display: none; position: fixed; inset: 0; background: #0d0b1a; color: #fff; font: 22px Arial; z-index: 9;
-             align-items: center; justify-content: center; text-align: center; padding: 24px; }
+    #girar { display: none; position: fixed; left: 0; right: 0; top: 0; background: #2b2350; color: #fff; font: 15px Arial; z-index: 9;
+             text-align: center; padding: 10px 36px 10px 10px; }
+    #girar b { position: absolute; right: 12px; top: 8px; font-size: 20px; }
     @media (orientation: portrait) and (pointer: coarse) { #girar { display: flex; } }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 </head>
 <body>
-  <div id="girar">📱↻<br><br>Vire o celular deitado para jogar</div>
+  <div id="girar" onclick="this.remove()">📱↻ Fica melhor com o celular deitado. Se a tela não girar, ative a rotação automática do celular. <b>✕</b></div>
   <script src="game.js"></script>
 </body>
 </html>
