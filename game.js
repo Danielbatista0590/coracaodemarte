@@ -24,9 +24,17 @@ class Menu extends Phaser.Scene {
       '2  —  Jogar com o Theo (deslizada)',
       '3  —  Os dois juntos (2 jogadores)',
     ];
-    opcoes.forEach((t, i) => this.add.text(W / 2, 260 + i * 46, t, { fontFamily: 'Arial', fontSize: 26, color: '#ffffff' }).setOrigin(0.5));
-    this.add.text(W / 2, 450, 'Jogador 1: ' + CONTROLES[0].texto, { fontFamily: 'Arial', fontSize: 15, color: '#9a93c9' }).setOrigin(0.5);
-    this.add.text(W / 2, 475, 'Jogador 2: ' + CONTROLES[1].texto, { fontFamily: 'Arial', fontSize: 15, color: '#9a93c9' }).setOrigin(0.5);
+    const escolhas = [['nicolas'], ['theo'], ['nicolas', 'theo']];
+    opcoes.forEach((t, i) => {
+      const op = this.add.text(W / 2, 260 + i * 56, t, { fontFamily: 'Arial', fontSize: 26, color: '#ffffff', backgroundColor: '#2b2350', padding: { x: 14, y: 8 } })
+        .setOrigin(0.5).setInteractive({ useHandCursor: true });
+      op.on('pointerdown', () => {
+        if (this.sys.game.device.input.touch && !this.scale.isFullscreen) { try { this.scale.startFullscreen(); } catch (e) {} }
+        this.scene.start('Fase', { jogadores: escolhas[i] });
+      });
+    });
+    this.add.text(W / 2, 470, 'Jogador 1: ' + CONTROLES[0].texto, { fontFamily: 'Arial', fontSize: 15, color: '#9a93c9' }).setOrigin(0.5);
+    this.add.text(W / 2, 495, 'Jogador 2: ' + CONTROLES[1].texto, { fontFamily: 'Arial', fontSize: 15, color: '#9a93c9' }).setOrigin(0.5);
 
     this.input.keyboard.on('keydown-ONE', () => this.scene.start('Fase', { jogadores: ['nicolas'] }));
     this.input.keyboard.on('keydown-TWO', () => this.scene.start('Fase', { jogadores: ['theo'] }));
@@ -100,6 +108,32 @@ class Fase extends Phaser.Scene {
 
     this.hud = this.add.text(16, 12, '', { fontFamily: 'Arial', fontSize: 20, color: '#ffffff' }).setScrollFactor(0).setDepth(10);
     this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
+    this.criarControlesToque();
+  }
+
+  // botões na tela para celular/tablet (controlam o Jogador 1)
+  criarControlesToque() {
+    this.toque = { esq: false, dir: false, pulo: false, chinelo: false, estilingue: false, especial: false };
+    if (!this.sys.game.device.input.touch) return;
+    this.input.addPointer(3); // até 4 dedos ao mesmo tempo
+    const botao = (x, y, r, rotulo, chave, segurar) => {
+      const b = this.add.circle(x, y, r, 0xffffff, 0.18).setStrokeStyle(3, 0xffffff, 0.5)
+        .setScrollFactor(0).setDepth(30).setInteractive();
+      this.add.text(x, y, rotulo, { fontFamily: 'Arial Black', fontSize: r * 0.55, color: '#ffffff' })
+        .setOrigin(0.5).setScrollFactor(0).setDepth(31).setAlpha(0.8);
+      const soltar = () => { if (segurar) this.toque[chave] = false; b.setFillStyle(0xffffff, 0.18); };
+      b.on('pointerdown', () => { this.toque[chave] = true; b.setFillStyle(0xffffff, 0.4); });
+      b.on('pointerup', soltar); b.on('pointerout', soltar);
+    };
+    botao(80, H - 80, 52, '◀', 'esq', true);
+    botao(200, H - 80, 52, '▶', 'dir', true);
+    botao(W - 80, H - 80, 52, '⤒', 'pulo', false);
+    botao(W - 190, H - 70, 44, '🩴', 'chinelo', false);
+    botao(W - 150, H - 175, 40, '🎯', 'estilingue', false);
+    botao(W - 50, H - 190, 38, '★', 'especial', false);
+    const menu = this.add.text(W - 16, 12, '☰', { fontFamily: 'Arial', fontSize: 30, color: '#ffffff' })
+      .setOrigin(1, 0).setScrollFactor(0).setDepth(30).setInteractive();
+    menu.on('pointerdown', () => this.scene.start('Menu'));
   }
 
   criarTexturas() {
@@ -182,17 +216,26 @@ class Fase extends Phaser.Scene {
 
   controlarJogador(j, delta) {
     const k = j.k, p = this.pad(j);
-    const esq = k.esq.isDown || (p && (p.left || p.leftStick.x < -0.4));
-    const dir = k.dir.isDown || (p && (p.right || p.leftStick.x > 0.4));
+    const esqK = k.esq.isDown || (p && (p.left || p.leftStick.x < -0.4));
+    const dirK = k.dir.isDown || (p && (p.right || p.leftStick.x > 0.4));
+    const esq0 = esqK, dir0 = dirK;
     const pulo = Phaser.Input.Keyboard.JustDown(k.pulo) || (p && p.A && !j.padA);
     const chinelo = Phaser.Input.Keyboard.JustDown(k.chinelo) || (p && p.X && !j.padX);
     const estilingue = Phaser.Input.Keyboard.JustDown(k.estilingue) || (p && p.Y && !j.padY);
     const especial = Phaser.Input.Keyboard.JustDown(k.especial) || (p && p.B && !j.padB);
     if (p) { j.padA = p.A; j.padX = p.X; j.padY = p.Y; j.padB = p.B; }
+    let tEsq = false, tDir = false, tPulo = false, tChinelo = false, tEstilingue = false, tEspecial = false;
+    if (j.idx === 0 && this.toque) {
+      const t = this.toque;
+      tEsq = t.esq; tDir = t.dir; tPulo = t.pulo; tChinelo = t.chinelo; tEstilingue = t.estilingue; tEspecial = t.especial;
+      t.pulo = t.chinelo = t.estilingue = t.especial = false; // toques são "apertou agora"
+    }
 
     ['invencivel', 'recargaChinelo', 'recargaEstilingue', 'recargaEspecial', 'deslizando'].forEach(c => j[c] = Math.max(0, j[c] - delta));
     j.setAlpha(j.invencivel > 0 && Math.floor(j.invencivel / 100) % 2 ? 0.4 : 1);
 
+    const esq = esq0 || tEsq, dir = dir0 || tDir;
+    const pulo2 = pulo || tPulo, chinelo2 = chinelo || tChinelo, estilingue2 = estilingue || tEstilingue, especial2 = especial || tEspecial;
     const noChao = j.body.blocked.down;
     if (noChao) j.pulosExtras = j.id === 'nicolas' ? 1 : 0;
 
@@ -205,13 +248,13 @@ class Fase extends Phaser.Scene {
     }
     j.setFlipX(j.direcao < 0);
 
-    if (pulo) {
+    if (pulo2) {
       if (noChao) j.setVelocityY(-560);
       else if (j.pulosExtras > 0) { j.pulosExtras--; j.setVelocityY(-500); this.poeira(j.x, j.y + 20); }
     }
 
     // especial: Nícolas = super pulo para baixo (pisão); Theo = deslizada invencível
-    if (especial && j.recargaEspecial === 0) {
+    if (especial2 && j.recargaEspecial === 0) {
       if (j.id === 'theo') {
         j.deslizando = 260; j.invencivel = Math.max(j.invencivel, 300); j.recargaEspecial = 800;
         this.poeira(j.x, j.y + 20);
@@ -226,8 +269,8 @@ class Fase extends Phaser.Scene {
       this.poeira(j.x, j.y + 20);
     }
 
-    if (chinelo && j.recargaChinelo === 0) this.chinelada(j);
-    if (estilingue && j.recargaEstilingue === 0) this.atirar(j);
+    if (chinelo2 && j.recargaChinelo === 0) this.chinelada(j);
+    if (estilingue2 && j.recargaEstilingue === 0) this.atirar(j);
   }
 
   chinelada(j) {
@@ -289,8 +332,8 @@ class Fase extends Phaser.Scene {
     const outros = this.jogadores.filter(o => !o.caido);
     if (!outros.length) {
       this.acabou = true;
-      this.mensagem('As sombras venceram desta vez...\nAperte R para tentar de novo', '#ff5d73');
-      this.input.keyboard.once('keydown-R', () => this.scene.restart());
+      this.mensagem('As sombras venceram desta vez...\nAperte R ou toque na tela para tentar de novo', '#ff5d73');
+      this.esperarRecomeco();
       return;
     }
     // no co-op, volta ao lado do parceiro depois de 4 segundos
@@ -308,8 +351,13 @@ class Fase extends Phaser.Scene {
     if (this.acabou) return;
     this.acabou = true;
     this.physics.pause();
-    this.mensagem('FASE CONCLUÍDA!\nAperte R para jogar de novo ou ESC para o menu', '#7cff6b');
+    this.mensagem('FASE CONCLUÍDA!\nAperte R ou toque na tela para jogar de novo', '#7cff6b');
+    this.esperarRecomeco();
+  }
+
+  esperarRecomeco() {
     this.input.keyboard.once('keydown-R', () => this.scene.restart());
+    this.time.delayedCall(800, () => this.input.once('pointerdown', () => this.scene.restart()));
   }
 
   mensagem(t, cor) {
