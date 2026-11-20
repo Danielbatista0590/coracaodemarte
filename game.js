@@ -84,7 +84,12 @@ class Fase extends Phaser.Scene {
 
     this.physics.add.collider(this.jogadores, this.chao);
     this.physics.add.collider(this.inimigos, this.chao);
-    this.physics.add.overlap(this.pedras, this.inimigos, (pedra, ini) => { pedra.destroy(); this.acertar(ini, 1, pedra.body.velocity.x > 0 ? 1 : -1); });
+    this.physics.add.overlap(this.pedras, this.inimigos, (pedra, ini) => {
+      if (!pedra.active || !ini.active) return;
+      const dir = pedra.body.velocity.x > 0 ? 1 : -1; // ler a direção ANTES de destruir a pedra
+      pedra.destroy();
+      this.acertar(ini, 1, dir);
+    });
     this.physics.add.collider(this.pedras, this.chao, (pedra) => pedra.destroy());
     this.physics.add.overlap(this.jogadores, this.inimigos, (j, ini) => this.levarDano(j, ini));
     this.physics.add.overlap(this.jogadores, this.chegada, () => this.vitoria());
@@ -217,7 +222,7 @@ class Fase extends Phaser.Scene {
     if (j.pisando && noChao) {
       j.pisando = false;
       this.cameras.main.shake(120, 0.006);
-      this.inimigos.children.each(s => { if (s.active && Math.abs(s.x - j.x) < 110 && Math.abs(s.y - j.y) < 60) this.acertar(s, 2, Math.sign(s.x - j.x) || 1); });
+      this.inimigos.getChildren().slice().forEach(s => { if (s.active && Math.abs(s.x - j.x) < 110 && Math.abs(s.y - j.y) < 60) this.acertar(s, 2, Math.sign(s.x - j.x) || 1); });
       this.poeira(j.x, j.y + 20);
     }
 
@@ -230,7 +235,7 @@ class Fase extends Phaser.Scene {
     const c = this.add.image(j.x + 24 * j.direcao, j.y, 'chinelo').setAngle(-60 * j.direcao);
     this.tweens.add({ targets: c, angle: 60 * j.direcao, duration: 120, onComplete: () => c.destroy() });
     const area = new Phaser.Geom.Rectangle(j.x + (j.direcao > 0 ? 0 : -60), j.y - 30, 60, 60);
-    this.inimigos.children.each(s => {
+    this.inimigos.getChildren().slice().forEach(s => {
       if (s.active && Phaser.Geom.Rectangle.Overlaps(area, s.getBounds())) {
         const critico = Math.random() < 0.2;
         this.acertar(s, critico ? 3 : 1, j.direcao);
