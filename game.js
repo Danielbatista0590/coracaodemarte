@@ -120,26 +120,37 @@ class Fase extends Phaser.Scene {
   // botões na tela para celular/tablet (controlam o Jogador 1)
   criarControlesToque() {
     this.toque = { esq: false, dir: false, pulo: false, chinelo: false, estilingue: false, especial: false };
+    this.botoes = [];
     if (!this.sys.game.device.input.touch) return;
-    this.input.addPointer(3); // até 4 dedos ao mesmo tempo
+    this.input.addPointer(4); // até 5 dedos ao mesmo tempo
     const botao = (x, y, r, rotulo, chave, segurar) => {
-      const b = this.add.circle(x, y, r, 0xffffff, 0.18).setStrokeStyle(3, 0xffffff, 0.5)
-        .setScrollFactor(0).setDepth(30).setInteractive();
+      const circ = this.add.circle(x, y, r, 0xffffff, 0.18).setStrokeStyle(3, 0xffffff, 0.5).setScrollFactor(0).setDepth(30);
       this.add.text(x, y, rotulo, { fontFamily: 'Arial Black', fontSize: r * 0.55, color: '#ffffff' })
         .setOrigin(0.5).setScrollFactor(0).setDepth(31).setAlpha(0.8);
-      const soltar = () => { if (segurar) this.toque[chave] = false; b.setFillStyle(0xffffff, 0.18); };
-      b.on('pointerdown', () => { this.toque[chave] = true; b.setFillStyle(0xffffff, 0.4); });
-      b.on('pointerup', soltar); b.on('pointerout', soltar);
+      this.botoes.push({ x, y, r: r * 1.25, chave, segurar, circ, antes: false });
     };
-    botao(80, H - 80, 52, '◀', 'esq', true);
-    botao(200, H - 80, 52, '▶', 'dir', true);
-    botao(W - 80, H - 80, 52, '⤒', 'pulo', false);
-    botao(W - 190, H - 70, 44, '🩴', 'chinelo', false);
-    botao(W - 150, H - 175, 40, '🎯', 'estilingue', false);
-    botao(W - 50, H - 190, 38, '★', 'especial', false);
+    botao(80, H - 80, 56, '◀', 'esq', true);
+    botao(205, H - 80, 56, '▶', 'dir', true);
+    botao(W - 80, H - 80, 56, '⤒', 'pulo', false);
+    botao(W - 200, H - 70, 46, '🩴', 'chinelo', false);
+    botao(W - 160, H - 185, 42, '🎯', 'estilingue', false);
+    botao(W - 55, H - 200, 40, '★', 'especial', false);
     const menu = this.add.text(W - 16, 12, '☰', { fontFamily: 'Arial', fontSize: 30, color: '#ffffff' })
       .setOrigin(1, 0).setScrollFactor(0).setDepth(30).setInteractive();
     menu.on('pointerdown', () => this.scene.start('Menu'));
+  }
+
+  // lê todos os dedos na tela a cada quadro: vários botões ao mesmo tempo, e dá pra arrastar o dedo
+  lerToque() {
+    if (!this.botoes || !this.botoes.length) return;
+    const dedos = this.input.manager.pointers.filter(p => p.isDown);
+    this.botoes.forEach(b => {
+      const agora = dedos.some(p => Phaser.Math.Distance.Between(p.x, p.y, b.x, b.y) <= b.r);
+      if (b.segurar) this.toque[b.chave] = agora;
+      else if (agora && !b.antes) this.toque[b.chave] = true; // acabou de apertar
+      b.antes = agora;
+      b.circ.setFillStyle(0xffffff, agora ? 0.4 : 0.18);
+    });
   }
 
   criarTexturas() {
@@ -190,6 +201,7 @@ class Fase extends Phaser.Scene {
 
   update(time, delta) {
     if (this.acabou) return;
+    this.lerToque();
     const vivos = this.jogadores.filter(j => !j.caido);
     vivos.forEach(j => this.controlarJogador(j, delta));
 
