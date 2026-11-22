@@ -12,5 +12,5 @@ Jogo de ação e plataforma (inspirado em Dead Cells e Heart of Darkness) com N�
 | Estilingue | G | L |
 | Especial | H | J |
 
-Especiais: **Nícolas** tem pulo duplo e dá um pisão no ar. **Theo** dá uma deslizada em que fica invencível.
+Nícolas tem pulo duplo. Especiais: **Nícolas** joga uma casca de banana, e os alienígenas que pisam nela escorregam para longe e ficam tontos. **Theo** solta um MEGA PUM, e os alienígenas em volta desmaiam por alguns segundos.
 Também funciona com controle: A pula, X dá chinelada, Y atira com o estilingue e B usa o especial.

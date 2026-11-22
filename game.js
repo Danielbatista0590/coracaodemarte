@@ -4,8 +4,8 @@
 const W = 960, H = 540, WORLD_W = 3200;
 
 const CHARS = {
-  nicolas: { nome: 'Nícolas', cor: 0x3fa9f5, habilidade: 'Pulo duplo' },
-  theo:    { nome: 'Theo',    cor: 0xff9f1c, habilidade: 'Deslizada' },
+  nicolas: { nome: 'Nícolas', cor: 0x3fa9f5, habilidade: 'Casca de banana' },
+  theo:    { nome: 'Theo',    cor: 0xff9f1c, habilidade: 'Mega pum' },
 };
 
 const CONTROLES = [
@@ -20,8 +20,8 @@ class Menu extends Phaser.Scene {
     this.add.text(W / 2, 110, 'CORAÇÃO DE MARTE', { fontFamily: 'Arial Black', fontSize: 52, color: '#ff5d73' }).setOrigin(0.5);
     this.add.text(W / 2, 170, 'Nícolas e Theo contra os alienígenas gosmentos', { fontFamily: 'Arial', fontSize: 20, color: '#cfc8ff' }).setOrigin(0.5);
     const opcoes = [
-      '1  —  Jogar com o Nícolas (pulo duplo)',
-      '2  —  Jogar com o Theo (deslizada)',
+      '1  —  Jogar com o Nícolas (casca de banana)',
+      '2  —  Jogar com o Theo (mega pum)',
       '3  —  Os dois juntos (2 jogadores)',
     ];
     const escolhas = [['nicolas'], ['theo'], ['nicolas', 'theo']];
@@ -98,6 +98,7 @@ class Fase extends Phaser.Scene {
     [[680, 260], [1500, 230], [2400, 210]].forEach(([x, y]) => this.criarInimigo(x, y, 'cuspidor'));
     this.chefao = this.criarInimigo(2950, H - 140, 'chefao');
     this.gosmas = this.physics.add.group({ allowGravity: false });
+    this.bananas = this.physics.add.group();
 
     // projéteis
     this.pedras = this.physics.add.group({ allowGravity: false });
@@ -118,6 +119,8 @@ class Fase extends Phaser.Scene {
     });
     this.physics.add.overlap(this.jogadores, this.gosmas, (j, g) => { if (!g.active) return; g.destroy(); this.levarDano(j, g, true); });
     this.physics.add.collider(this.gosmas, this.chao, (g) => g.destroy());
+    this.physics.add.collider(this.bananas, this.chao, (b) => { b.setAngularVelocity(0).setVelocityX(0); });
+    this.physics.add.overlap(this.inimigos, this.bananas, (s, b) => this.escorregar(s, b));
 
     // câmera segue o ponto médio entre os jogadores
     this.alvoCamera = this.add.zone(0, 0, 1, 1);
@@ -194,6 +197,8 @@ class Fase extends Phaser.Scene {
      .fillStyle(0xff6bd5).fillCircle(17, 15, 4).fillCircle(31, 15, 4);
     g.generateTexture('agarrador', 48, 48).clear();
     g.fillStyle(0x9dff4a).fillCircle(7, 7, 7); g.generateTexture('gosma', 14, 14).clear();
+    g.fillStyle(0xffe14d).fillEllipse(14, 10, 26, 10).fillTriangle(2, 10, 8, 2, 10, 10).fillTriangle(26, 10, 20, 2, 18, 10)
+     .fillStyle(0x6b4a1f).fillCircle(14, 6, 2); g.generateTexture('banana', 28, 16).clear();
     g.fillStyle(0x7dff95).fillEllipse(30, 8, 60, 16); g.generateTexture('poca', 60, 16).clear();
     Object.entries(CHARS).forEach(([id, c]) => {
       g.fillStyle(c.cor).fillRoundedRect(4, 14, 24, 30, 6);     // corpo
@@ -257,7 +262,14 @@ class Fase extends Phaser.Scene {
   }
 
   pensarInimigo(s, delta) {
-    if (s.atordoado > 0) { s.atordoado -= delta; s.setVelocityX(0); return; }
+    if (s.atordoado > 0) {
+      s.atordoado -= delta;
+      if (s.empurrao > 0) s.empurrao -= delta; else s.setVelocityX(0);
+      if (s.tipo === 'morcego') s.setVelocityY(s.body.blocked.down ? 0 : 200); // desmaiado cai
+      if (s.zzz) s.zzz.setPosition(s.x, s.y - 40);
+      if (s.atordoado <= 0) { s.setAngle(0); if (s.zzz) { s.zzz.destroy(); s.zzz = null; } }
+      return;
+    }
     if (s.vitima) { s.setVelocityX(0); return; }
     const alvo = this.maisPerto(s.x, s.y);
     if (s.tipo === 'sombra' || s.tipo === 'comedor' || s.tipo === 'agarrador') {
@@ -386,20 +398,10 @@ class Fase extends Phaser.Scene {
       else if (j.pulosExtras > 0) { j.pulosExtras--; j.setVelocityY(-500); this.poeira(j.x, j.y + 20); }
     }
 
-    // especial: Nícolas = super pulo para baixo (pisão); Theo = deslizada invencível
+    // especiais para ganhar tempo: Nícolas joga casca de banana; Theo solta o MEGA PUM
     if (especial2 && j.recargaEspecial === 0) {
-      if (j.id === 'theo') {
-        j.deslizando = 260; j.invencivel = Math.max(j.invencivel, 300); j.recargaEspecial = 800;
-        this.poeira(j.x, j.y + 20);
-      } else if (!noChao) {
-        j.setVelocityY(800); j.pisando = true; j.recargaEspecial = 800;
-      }
-    }
-    if (j.pisando && noChao) {
-      j.pisando = false;
-      this.cameras.main.shake(120, 0.006);
-      this.inimigos.getChildren().slice().forEach(s => { if (s.active && Math.abs(s.x - j.x) < 110 && Math.abs(s.y - j.y) < 60) this.acertar(s, 2, Math.sign(s.x - j.x) || 1); });
-      this.poeira(j.x, j.y + 20);
+      if (j.id === 'nicolas') this.jogarBanana(j);
+      else this.megaPum(j);
     }
 
     if (chinelo2 && j.recargaChinelo === 0) this.chinelada(j);
@@ -436,6 +438,51 @@ class Fase extends Phaser.Scene {
     else if (s.tipo === 'morcego') { s.setVelocity(220 * dir, -120); s.estado = 'voando'; s.relogio = 0; }
     else { s.setVelocity(200 * dir, -180); this.time.delayedCall(250, () => s.active && s.setVelocityX(s.velocidade * dir)); }
     if (s.vida <= 0) this.confete(s);
+  }
+
+  // ---- especial do Nícolas: casca de banana
+  jogarBanana(j) {
+    j.recargaEspecial = 2500;
+    const b = this.bananas.create(j.x + 20 * j.direcao, j.y - 10, 'banana');
+    b.setVelocity(260 * j.direcao, -280).setAngularVelocity(400 * j.direcao);
+    b.usos = 3; b.dono = j;
+    this.time.delayedCall(8000, () => b.active && b.destroy());
+  }
+
+  escorregar(s, b) {
+    if (!b.active || !s.active || s.atordoado > 0 || s.tipo === 'chefao' || s.tipo === 'morcego' || s.vitima) return;
+    const dir = s.x >= b.dono.x ? 1 : -1; // voa para LONGE do Nícolas
+    s.setVelocity(420 * dir, -520);
+    s.atordoado = 2200; s.empurrao = 900;
+    this.tweens.add({ targets: s, angle: 360 * dir, duration: 700, onComplete: () => s.active && s.setAngle(180) });
+    this.texto(s.x, s.y - 40, 'ESCORREGOU!', '#ffe14d');
+    this.desmaiar(s, 0);
+    b.usos--; if (b.usos <= 0) b.destroy();
+  }
+
+  // ---- especial do Theo: MEGA PUM
+  megaPum(j) {
+    j.recargaEspecial = 5000;
+    const nuvem = this.add.circle(j.x, j.y, 30, 0x9bd94a, 0.55).setDepth(6);
+    this.tweens.add({ targets: nuvem, radius: 200, alpha: 0, duration: 1100, onComplete: () => nuvem.destroy() });
+    const fumaca = this.add.particles(j.x - 10 * j.direcao, j.y + 10, 'confete', {
+      speed: { min: 40, max: 180 }, lifespan: 1000, scale: { start: 3, end: 6 }, alpha: { start: 0.5, end: 0 }, tint: [0x9bd94a, 0xc4e86b, 0x7fa83a], emitting: false,
+    });
+    fumaca.explode(40); this.time.delayedCall(1100, () => fumaca.destroy());
+    this.cameras.main.shake(250, 0.008);
+    this.texto(j.x, j.y - 60, 'PRRRRRUUUM!', '#c4e86b');
+    this.inimigos.getChildren().slice().forEach(s => {
+      if (!s.active || Phaser.Math.Distance.Between(s.x, s.y, j.x, j.y) > 200) return;
+      if (s.vitima) this.soltar(s.vitima, true);
+      if (s.tipo === 'chefao') { s.atordoado = 1200; s.empurrao = 0; }
+      else { s.atordoado = 3500; s.empurrao = 0; s.setAngle(90); }
+      this.desmaiar(s, 1);
+    });
+  }
+
+  desmaiar(s, tipo) {
+    if (s.zzz) s.zzz.destroy();
+    s.zzz = this.add.text(s.x, s.y - 40, tipo ? '😵 zzz' : '💫', { fontFamily: 'Arial', fontSize: 18 }).setOrigin(0.5).setDepth(15);
   }
 
   // ---- capturas (estilo Heart of Darkness): aperte os botões rapidinho para se soltar
@@ -498,6 +545,7 @@ class Fase extends Phaser.Scene {
 
   // ---- morte por derretimento
   confete(s) {
+    if (s.zzz) { s.zzz.destroy(); s.zzz = null; }
     const vitima = s.vitima; s.vitima = null;
     const x = s.x, base = s.body ? s.body.bottom : s.y + 20, esc = s.scaleX;
     s.body.enable = false; s.setActive(false);
@@ -524,6 +572,7 @@ class Fase extends Phaser.Scene {
 
   levarDano(j, s, semPisao) {
     if (j.invencivel > 0 || j.caido) return;
+    if (!semPisao && s.atordoado > 0 && s.tipo !== 'chefao') return; // tonto/desmaiado não machuca
     if (!semPisao && s.tipo !== 'chefao' && j.body.velocity.y > 100 && j.y < s.y - 15) { // pulou em cima
       j.setVelocityY(-400); this.acertar(s, 1, j.direcao); return;
     }
