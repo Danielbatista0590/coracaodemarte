@@ -90,12 +90,13 @@ class Fase extends Phaser.Scene {
 
     // inimigos
     this.inimigos = this.physics.add.group();
-    [[700, H - 80], [1200, H - 80], [1250, 320], [1500, H - 80], [1900, H - 80], [2100, 280], [2300, H - 80], [2600, H - 80], [2750, 300], [1050, H - 80], [1750, 320]]
+    // distribuição mais espaçada: um tipo novo de cada vez, com respiro entre os grupos
+    [[700, H - 80], [1500, H - 80], [1900, H - 80], [2300, H - 80], [2700, H - 80], [1250, 320]]
       .forEach(([x, y]) => this.criarInimigo(x, y, 'sombra'));
-    [[1300, H - 90], [2200, H - 90], [2850, H - 90]].forEach(([x, y]) => this.criarInimigo(x, y, 'comedor'));
-    [[1000, H - 90], [1950, H - 90], [2550, H - 90]].forEach(([x, y]) => this.criarInimigo(x, y, 'agarrador'));
-    [[900, 200], [1400, 150], [2000, 180], [2450, 140], [2650, 200]].forEach(([x, y]) => this.criarInimigo(x, y, 'morcego'));
-    [[680, 260], [1500, 230], [2400, 210]].forEach(([x, y]) => this.criarInimigo(x, y, 'cuspidor'));
+    [[1150, 180], [2000, 180], [2600, 200]].forEach(([x, y]) => this.criarInimigo(x, y, 'morcego'));
+    [[1500, 230], [2400, 210]].forEach(([x, y]) => this.criarInimigo(x, y, 'cuspidor'));
+    [[1300, H - 90], [2550, H - 90]].forEach(([x, y]) => this.criarInimigo(x, y, 'comedor'));
+    [[1050, H - 90], [2150, H - 90]].forEach(([x, y]) => this.criarInimigo(x, y, 'agarrador'));
     this.chefao = this.criarInimigo(2950, H - 140, 'chefao');
     this.gosmas = this.physics.add.group({ allowGravity: false });
     this.bananas = this.physics.add.group();
@@ -217,7 +218,7 @@ class Fase extends Phaser.Scene {
     const c = CONTROLES[idx];
     const k = this.input.keyboard.addKeys(c);
     Object.assign(j, {
-      id, idx, k, vida: 5, vidaMax: 5, direcao: 1, pulosExtras: 0,
+      id, idx, k, vida: 6, vidaMax: 6, direcao: 1, pulosExtras: 0,
       invencivel: 0, recargaChinelo: 0, recargaEstilingue: 0, recargaEspecial: 0, deslizando: 0, caido: false,
     });
     return j;
