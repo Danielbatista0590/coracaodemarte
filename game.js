@@ -14,37 +14,55 @@ const CONTROLES = [
 ];
 
 // ---------------------------------------------------------------- MENU
+const DIFICULDADES = [
+  { nome: 'Molezinha',            cor: '#7cff6b', vidaJog: 8, vidaInim: 0.6, vel: 0.8,  apertos: 0.6, quantidade: 'menos' },
+  { nome: 'Moleza',               cor: '#ffef5d', vidaJog: 6, vidaInim: 1,   vel: 1,    apertos: 1,   quantidade: 'normal' },
+  { nome: 'Quero a minha mãe!',   cor: '#ff5d73', vidaJog: 4, vidaInim: 1.5, vel: 1.25, apertos: 1.4, quantidade: 'mais' },
+];
+
 class Menu extends Phaser.Scene {
   constructor() { super('Menu'); }
   create() {
-    this.add.text(W / 2, 110, 'CORAÇÃO DE MARTE', { fontFamily: 'Arial Black', fontSize: 52, color: '#ff5d73' }).setOrigin(0.5);
-    this.add.text(W / 2, 170, 'Nícolas e Theo contra os alienígenas gosmentos', { fontFamily: 'Arial', fontSize: 20, color: '#cfc8ff' }).setOrigin(0.5);
-    const opcoes = [
-      '1  —  Jogar com o Nícolas (casca de banana)',
-      '2  —  Jogar com o Theo (mega pum)',
-      '3  —  Os dois juntos (2 jogadores)',
-    ];
-    const escolhas = [['nicolas'], ['theo'], ['nicolas', 'theo']];
-    opcoes.forEach((t, i) => {
-      const op = this.add.text(W / 2, 260 + i * 56, t, { fontFamily: 'Arial', fontSize: 26, color: '#ffffff', backgroundColor: '#2b2350', padding: { x: 14, y: 8 } })
-        .setOrigin(0.5).setInteractive({ useHandCursor: true });
-      op.on('pointerdown', () => {
-        if (this.sys.game.device.input.touch) {
-          try {
-            if (!this.scale.isFullscreen) this.scale.startFullscreen();
-            // trava em paisagem (funciona no Android/Chrome; no iPhone é ignorado)
-            setTimeout(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }, 300);
-          } catch (e) {}
-        }
-        this.scene.start('Fase', { jogadores: escolhas[i] });
-      });
-    });
+    this.add.text(W / 2, 100, 'CORAÇÃO DE MARTE', { fontFamily: 'Arial Black', fontSize: 52, color: '#ff5d73' }).setOrigin(0.5);
+    this.add.text(W / 2, 160, 'Nícolas e Theo contra os alienígenas gosmentos', { fontFamily: 'Arial', fontSize: 20, color: '#cfc8ff' }).setOrigin(0.5);
     this.add.text(W / 2, 470, 'Jogador 1: ' + CONTROLES[0].texto, { fontFamily: 'Arial', fontSize: 15, color: '#9a93c9' }).setOrigin(0.5);
     this.add.text(W / 2, 495, 'Jogador 2: ' + CONTROLES[1].texto, { fontFamily: 'Arial', fontSize: 15, color: '#9a93c9' }).setOrigin(0.5);
+    this.itens = [];
+    this.passo1();
+  }
 
-    this.input.keyboard.on('keydown-ONE', () => this.scene.start('Fase', { jogadores: ['nicolas'] }));
-    this.input.keyboard.on('keydown-TWO', () => this.scene.start('Fase', { jogadores: ['theo'] }));
-    this.input.keyboard.on('keydown-THREE', () => this.scene.start('Fase', { jogadores: ['nicolas', 'theo'] }));
+  telaCheia() {
+    if (!this.sys.game.device.input.touch) return;
+    try {
+      if (!this.scale.isFullscreen) this.scale.startFullscreen();
+      // trava em paisagem (funciona no Android/Chrome; no iPhone é ignorado)
+      setTimeout(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }, 300);
+    } catch (e) {}
+  }
+
+  // mostra opções clicáveis/tocáveis e também pelas teclas 1, 2, 3
+  opcoes(titulo, textos, cores, aoEscolher) {
+    this.itens.forEach(i => i.destroy()); this.itens = [];
+    this.input.keyboard.removeAllListeners();
+    this.itens.push(this.add.text(W / 2, 215, titulo, { fontFamily: 'Arial Black', fontSize: 22, color: '#cfc8ff' }).setOrigin(0.5));
+    textos.forEach((t, i) => {
+      const op = this.add.text(W / 2, 270 + i * 58, `${i + 1}  —  ${t}`, { fontFamily: 'Arial', fontSize: 26, color: cores ? cores[i] : '#ffffff', backgroundColor: '#2b2350', padding: { x: 14, y: 8 } })
+        .setOrigin(0.5).setInteractive({ useHandCursor: true });
+      op.on('pointerdown', () => { this.telaCheia(); aoEscolher(i); });
+      this.itens.push(op);
+    });
+    ['ONE', 'TWO', 'THREE'].forEach((k, i) => this.input.keyboard.once('keydown-' + k, () => aoEscolher(i)));
+  }
+
+  passo1() {
+    const escolhas = [['nicolas'], ['theo'], ['nicolas', 'theo']];
+    this.opcoes('Quem vai jogar?', ['Nícolas (casca de banana)', 'Theo (mega pum)', 'Os dois juntos (2 jogadores)'], null,
+      i => this.time.delayedCall(50, () => this.passo2(escolhas[i])));
+  }
+
+  passo2(jogadores) {
+    this.opcoes('Escolha a dificuldade', DIFICULDADES.map(d => d.nome), DIFICULDADES.map(d => d.cor),
+      i => this.scene.start('Fase', { jogadores, dificuldade: i }));
   }
 }
 
@@ -52,7 +70,12 @@ class Menu extends Phaser.Scene {
 class Fase extends Phaser.Scene {
   constructor() { super('Fase'); }
 
-  init(data) { this.escolha = data.jogadores; this.acabou = false; }
+  init(data) {
+    if (data && data.jogadores) this.registry.set('config', data);
+    const cfg = this.registry.get('config');
+    this.escolha = cfg.jogadores; this.dif = DIFICULDADES[cfg.dificuldade ?? 1];
+    this.acabou = false;
+  }
 
   create() {
     this.criarTexturas();
@@ -90,6 +113,17 @@ class Fase extends Phaser.Scene {
 
     // inimigos
     this.inimigos = this.physics.add.group();
+    // Molezinha: pula 1 a cada 3 inimigos. Quero a minha mãe!: inimigos extras
+    let n = 0;
+    const criar0 = this.criarInimigo.bind(this);
+    this.criarInimigo = (x, y, tipo) => (this.dif.quantidade === 'menos' && tipo !== 'chefao' && (n++ % 3 === 2)) ? null : criar0(x, y, tipo);
+    if (this.dif.quantidade === 'mais') {
+      [[1000, H - 80], [1750, 320], [2100, 280], [2850, H - 80]].forEach(([x, y]) => this.criarInimigo(x, y, 'sombra'));
+      [[900, 200], [2450, 140]].forEach(([x, y]) => this.criarInimigo(x, y, 'morcego'));
+      [[680, 260]].forEach(([x, y]) => this.criarInimigo(x, y, 'cuspidor'));
+      [[2200, H - 90]].forEach(([x, y]) => this.criarInimigo(x, y, 'comedor'));
+      [[1950, H - 90]].forEach(([x, y]) => this.criarInimigo(x, y, 'agarrador'));
+    }
     // distribuição mais espaçada: um tipo novo de cada vez, com respiro entre os grupos
     [[700, H - 80], [1500, H - 80], [1900, H - 80], [2300, H - 80], [2700, H - 80], [1250, 320]]
       .forEach(([x, y]) => this.criarInimigo(x, y, 'sombra'));
@@ -98,6 +132,7 @@ class Fase extends Phaser.Scene {
     [[1300, H - 90], [2550, H - 90]].forEach(([x, y]) => this.criarInimigo(x, y, 'comedor'));
     [[1050, H - 90], [2150, H - 90]].forEach(([x, y]) => this.criarInimigo(x, y, 'agarrador'));
     this.chefao = this.criarInimigo(2950, H - 140, 'chefao');
+    delete this.criarInimigo; // volta ao normal (a cena é reaproveitada ao reiniciar)
     this.gosmas = this.physics.add.group({ allowGravity: false });
     this.bananas = this.physics.add.group();
 
@@ -218,7 +253,7 @@ class Fase extends Phaser.Scene {
     const c = CONTROLES[idx];
     const k = this.input.keyboard.addKeys(c);
     Object.assign(j, {
-      id, idx, k, vida: 6, vidaMax: 6, direcao: 1, pulosExtras: 0,
+      id, idx, k, vida: this.dif.vidaJog, vidaMax: this.dif.vidaJog, direcao: 1, pulosExtras: 0,
       invencivel: 0, recargaChinelo: 0, recargaEstilingue: 0, recargaEspecial: 0, deslizando: 0, caido: false,
     });
     return j;
@@ -246,6 +281,10 @@ class Fase extends Phaser.Scene {
       s.vida = s.vidaMax = 30; s.velocidade = 90; s.setScale(2.6).setTint(0x2e9e4a);
       s.body.setSize(36, 32).setOffset(2, 6); s.recarga = 2000; s.ativado = false;
     }
+    s.vida = Math.max(1, Math.round(s.vida * this.dif.vidaInim));
+    if (s.vidaMax) s.vidaMax = s.vida;
+    s.velocidade *= this.dif.vel;
+    if (s.body.velocity.x) s.setVelocityX(Math.sign(s.body.velocity.x) * s.velocidade);
     return s;
   }
 
@@ -489,7 +528,7 @@ class Fase extends Phaser.Scene {
   // ---- capturas (estilo Heart of Darkness): aperte os botões rapidinho para se soltar
   capturar(j, s) {
     s.vitima = j;
-    j.preso = { s, faltam: s.tipo === 'comedor' ? 12 : 8, tempo: 0, dano: 0 };
+    j.preso = { s, faltam: Math.max(3, Math.round((s.tipo === 'comedor' ? 12 : 8) * this.dif.apertos)), tempo: 0, dano: 0 };
     j.body.setAllowGravity(false); j.setVelocity(0, 0);
     if (s.tipo === 'comedor') {
       j.setVisible(false);
