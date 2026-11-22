@@ -1,7 +1,61 @@
 // Coração de Marte — protótipo
 // Nícolas e Theo contra os alienígenas gosmentos. Nada de sangue: os inimigos derretem!
 
-const W = 960, H = 540, WORLD_W = 3200;
+const W = 960, H = 540, T = 32; // T = tamanho do bloco do mapa
+
+// Mapa da fase (gerado por tools/mapa.py). Legenda:
+// # bloco  - plataforma atravessável  H escada  P início  E saída  B chefe
+// g gosmento  v água-viva  c cuspidor  m comedor  a agarrador  (MAIÚSCULAS: só no "Quero a minha mãe!")
+const MAPA = [
+  '####################################################################################################',
+  '#                                                                                                  #',
+  '#                                                                                                  #',
+  '#                                                                                                  #',
+  '#                                                                                                  #',
+  '#                                                                #                                 #',
+  '#                                                                #                                 #',
+  '#                                                                #                                 #',
+  '#                                                                #                                 #',
+  '#                                                                #                                 #',
+  '#                                                 V              #                                 #',
+  '#                                                                #                                 #',
+  '#                                    v                           #         B                       #',
+  '#                                                                #                               E #',
+  '#                                                                 ##################-------#########',
+  '#                                    C                                                             #',
+  '#                                 -------                                                          #',
+  '#                                                                                    -------       #',
+  '#                                                                                                  #',
+  '#                     H       g         a       A c                                                #',
+  '#                 ###-H-###################################                                ------- #',
+  '#                     H                                                                            #',
+  '#                     H                                                                            #',
+  '#             ------  H                                                             -------        #',
+  '#                     H   -------                                                                  #',
+  '#                     H                                                                            #',
+  '#        -------      H                                                         v           -------#',
+  '#                     H             ---------                                                      #',
+  '#                     H                                                                            #',
+  '# -------             H                                                                  -------   #',
+  '#           v         H                          c                                                 #',
+  '#                     H                       ---------           H     g             c            #',
+  '#         -------     H                                         #-H-#####################          #',
+  '#                     H                 G                         H                                #',
+  '#                     H         ---------                         H                                #',
+  '#  -------            H                                           H                                #',
+  '#                     H                                           H                                #',
+  '#                     H                   ---------               H                                #',
+  '#          -------    H                                           H                                #',
+  '#                     H                                           H                                #',
+  '#                     H       ---------                           H                                #',
+  '#   -------           H                                           H                                #',
+  '#  P                  H                                           H                                #',
+  '#       G     g       H            g         m         g    M     H        a         g      m  G   #',
+  '####################################################################################################',
+];
+
+const MAPA_W = MAPA[0].length * T, MAPA_H = MAPA.length * T;
+const TIPOS = { g: 'sombra', v: 'morcego', c: 'cuspidor', m: 'comedor', a: 'agarrador', b: 'chefao' };
 
 const CHARS = {
   nicolas: { nome: 'Nícolas', cor: 0x3fa9f5, habilidade: 'Casca de banana' },
@@ -9,8 +63,8 @@ const CHARS = {
 };
 
 const CONTROLES = [
-  { esq: 'A', dir: 'D', pulo: 'W', chinelo: 'F', estilingue: 'G', especial: 'H', texto: 'A/D andar · W pular · F chinelo · G estilingue · H especial' },
-  { esq: 'LEFT', dir: 'RIGHT', pulo: 'UP', chinelo: 'K', estilingue: 'L', especial: 'J', texto: 'Setas andar/pular · K chinelo · L estilingue · J especial' },
+  { esq: 'A', dir: 'D', pulo: 'W', baixo: 'S', chinelo: 'F', estilingue: 'G', especial: 'H', texto: 'A/D andar · W pular/subir · S descer · F chinelo · G estilingue · H especial' },
+  { esq: 'LEFT', dir: 'RIGHT', pulo: 'UP', baixo: 'DOWN', chinelo: 'K', estilingue: 'L', especial: 'J', texto: 'Setas andar/pular/subir/descer · K chinelo · L estilingue · J especial' },
 ];
 
 // ---------------------------------------------------------------- MENU
@@ -79,60 +133,63 @@ class Fase extends Phaser.Scene {
 
   create() {
     this.criarTexturas();
-    this.physics.world.setBounds(0, 0, WORLD_W, H + 200);
-    this.cameras.main.setBounds(0, 0, WORLD_W, H);
-    this.cameras.main.setBackgroundColor('#1a1433');
+    this.physics.world.setBounds(0, 0, MAPA_W, MAPA_H + 200);
+    this.cameras.main.setBounds(0, 0, MAPA_W, MAPA_H);
+    this.cameras.main.setBackgroundColor('#0f2418');
 
-    // fundo com "estrelas"
-    for (let i = 0; i < 120; i++) {
-      this.add.circle(Phaser.Math.Between(0, WORLD_W), Phaser.Math.Between(0, H - 100), Phaser.Math.Between(1, 2), 0xffffff, 0.4).setScrollFactor(0.4);
+    // fundo: bolhas de gosma flutuando ao longe
+    for (let i = 0; i < 220; i++) {
+      this.add.circle(Phaser.Math.Between(0, MAPA_W), Phaser.Math.Between(0, MAPA_H), Phaser.Math.Between(1, 3), 0x7dff95, 0.15).setScrollFactor(0.5);
     }
 
-    // plataformas
+    // lê o mapa: junta blocos vizinhos da mesma linha em uma peça só
     this.chao = this.physics.add.staticGroup();
-    const plat = (x, y, w, h = 24) => {
-      const p = this.add.tileSprite(x, y, w, h, 'bloco').setOrigin(0, 0);
-      this.physics.add.existing(p, true);
-      this.chao.add(p);
-    };
-    plat(0, H - 40, 900, 40);
-    plat(1000, H - 40, 700, 40);
-    plat(1820, H - 40, 600, 40);
-    plat(2520, H - 40, 680, 40);
-    plat(350, 380, 180); plat(620, 300, 160); plat(1150, 360, 200);
-    plat(1450, 270, 160); plat(1700, 360, 140); plat(2050, 320, 200);
-    plat(2350, 250, 140); plat(2700, 340, 200);
-
-    // bandeira de chegada
-    this.chegada = this.add.rectangle(3100, H - 100, 20, 120, 0x7cff6b);
-    this.physics.add.existing(this.chegada, true);
-    this.add.text(3060, H - 190, 'SAÍDA', { fontFamily: 'Arial Black', fontSize: 20, color: '#7cff6b' });
+    this.pontes = this.physics.add.staticGroup();
+    this.escadas = this.physics.add.staticGroup();
+    const pecas = [];
+    MAPA.forEach((linha, r) => {
+      let c = 0;
+      while (c < linha.length) {
+        const ch = linha[c];
+        if (ch === '#' || ch === '-') {
+          let f = c; while (f + 1 < linha.length && linha[f + 1] === ch) f++;
+          const larg = (f - c + 1) * T;
+          const p = this.add.tileSprite(c * T, r * T, larg, ch === '#' ? T : 12, ch === '#' ? 'bloco' : 'ponte').setOrigin(0, 0);
+          this.physics.add.existing(p, true);
+          (ch === '#' ? this.chao : this.pontes).add(p);
+          c = f + 1; continue;
+        }
+        if (ch === 'H') {
+          const e = this.add.image(c * T + T / 2, r * T + T / 2, 'escada');
+          this.physics.add.existing(e, true); this.escadas.add(e);
+        } else if (ch !== ' ') pecas.push({ ch, x: c * T + T / 2, y: (r + 1) * T });
+        c++;
+      }
+    });
+    this.plataformas = [...this.chao.getChildren(), ...this.pontes.getChildren()];
 
     // jogadores
-    this.jogadores = this.escolha.map((id, i) => this.criarJogador(id, i, 120 + i * 60));
+    const ini = pecas.find(p => p.ch === 'P');
+    this.jogadores = this.escolha.map((id, i) => this.criarJogador(id, i, ini.x + i * 50, ini.y - 30));
 
-    // inimigos
+    // saída
+    const ex = pecas.find(p => p.ch === 'E');
+    this.chegada = this.add.rectangle(ex.x, ex.y - 60, 20, 120, 0x7cff6b);
+    this.physics.add.existing(this.chegada, true);
+    this.add.text(ex.x, ex.y - 140, 'SAÍDA', { fontFamily: 'Arial Black', fontSize: 20, color: '#7cff6b' }).setOrigin(0.5);
+
+    // inimigos — Molezinha: pula 1 a cada 3. Quero a minha mãe!: inclui os MAIÚSCULOS
     this.inimigos = this.physics.add.group();
-    // Molezinha: pula 1 a cada 3 inimigos. Quero a minha mãe!: inimigos extras
     let n = 0;
-    const criar0 = this.criarInimigo.bind(this);
-    this.criarInimigo = (x, y, tipo) => (this.dif.quantidade === 'menos' && tipo !== 'chefao' && (n++ % 3 === 2)) ? null : criar0(x, y, tipo);
-    if (this.dif.quantidade === 'mais') {
-      [[1000, H - 80], [1750, 320], [2100, 280], [2850, H - 80]].forEach(([x, y]) => this.criarInimigo(x, y, 'sombra'));
-      [[900, 200], [2450, 140]].forEach(([x, y]) => this.criarInimigo(x, y, 'morcego'));
-      [[680, 260]].forEach(([x, y]) => this.criarInimigo(x, y, 'cuspidor'));
-      [[2200, H - 90]].forEach(([x, y]) => this.criarInimigo(x, y, 'comedor'));
-      [[1950, H - 90]].forEach(([x, y]) => this.criarInimigo(x, y, 'agarrador'));
-    }
-    // distribuição mais espaçada: um tipo novo de cada vez, com respiro entre os grupos
-    [[700, H - 80], [1500, H - 80], [1900, H - 80], [2300, H - 80], [2700, H - 80], [1250, 320]]
-      .forEach(([x, y]) => this.criarInimigo(x, y, 'sombra'));
-    [[1150, 180], [2000, 180], [2600, 200]].forEach(([x, y]) => this.criarInimigo(x, y, 'morcego'));
-    [[1500, 230], [2400, 210]].forEach(([x, y]) => this.criarInimigo(x, y, 'cuspidor'));
-    [[1300, H - 90], [2550, H - 90]].forEach(([x, y]) => this.criarInimigo(x, y, 'comedor'));
-    [[1050, H - 90], [2150, H - 90]].forEach(([x, y]) => this.criarInimigo(x, y, 'agarrador'));
-    this.chefao = this.criarInimigo(2950, H - 140, 'chefao');
-    delete this.criarInimigo; // volta ao normal (a cena é reaproveitada ao reiniciar)
+    pecas.forEach(p => {
+      if (p.ch === 'B') { this.chefao = this.criarInimigo(p.x, p.y - 60, 'chefao'); return; }
+      const tipo = TIPOS[p.ch.toLowerCase()];
+      if (!tipo) return;
+      const extra = p.ch !== p.ch.toLowerCase();
+      if (extra && this.dif.quantidade !== 'mais') return;
+      if (this.dif.quantidade === 'menos' && (n++ % 3 === 2)) return;
+      this.criarInimigo(p.x, p.y - 24, tipo);
+    });
     this.gosmas = this.physics.add.group({ allowGravity: false });
     this.bananas = this.physics.add.group();
 
@@ -141,6 +198,10 @@ class Fase extends Phaser.Scene {
 
     this.physics.add.collider(this.jogadores, this.chao);
     this.physics.add.collider(this.inimigos, this.chao);
+    // plataformas atravessáveis: só seguram quem vem de cima
+    const deCima = (o, p) => o.body.velocity.y >= 0 && o.body.bottom <= p.body.top + 12;
+    this.physics.add.collider(this.jogadores, this.pontes, null, (j, p) => !j.descendo && !j.escalando && deCima(j, p));
+    this.physics.add.collider(this.inimigos, this.pontes, null, (s, p) => s.tipo !== 'morcego' && deCima(s, p));
     this.physics.add.overlap(this.pedras, this.inimigos, (pedra, ini) => {
       if (!pedra.active || !ini.active) return;
       const dir = pedra.body.velocity.x > 0 ? 1 : -1; // ler a direção ANTES de destruir a pedra
@@ -150,12 +211,13 @@ class Fase extends Phaser.Scene {
     this.physics.add.collider(this.pedras, this.chao, (pedra) => pedra.destroy());
     this.physics.add.overlap(this.jogadores, this.inimigos, (j, ini) => this.levarDano(j, ini));
     this.physics.add.overlap(this.jogadores, this.chegada, () => {
-      if (this.chefao.active) { if (!this.avisouChefao) { this.avisouChefao = true; this.texto(3100, H - 220, 'Derrote o GOSMÃO primeiro!', '#ff5d73'); this.time.delayedCall(1500, () => this.avisouChefao = false); } return; }
+      if (this.chefao.active) { if (!this.avisouChefao) { this.avisouChefao = true; this.texto(this.chegada.x, this.chegada.y - 110, 'Derrote o GOSMÃO primeiro!', '#ff5d73'); this.time.delayedCall(1500, () => this.avisouChefao = false); } return; }
       this.vitoria();
     });
     this.physics.add.overlap(this.jogadores, this.gosmas, (j, g) => { if (!g.active) return; g.destroy(); this.levarDano(j, g, true); });
     this.physics.add.collider(this.gosmas, this.chao, (g) => g.destroy());
     this.physics.add.collider(this.bananas, this.chao, (b) => { b.setAngularVelocity(0).setVelocityX(0); });
+    this.physics.add.collider(this.bananas, this.pontes, (b) => { b.setAngularVelocity(0).setVelocityX(0); }, (b, p) => deCima(b, p));
     this.physics.add.overlap(this.inimigos, this.bananas, (s, b) => this.escorregar(s, b));
 
     // câmera segue o ponto médio entre os jogadores
@@ -169,7 +231,7 @@ class Fase extends Phaser.Scene {
 
   // botões na tela para celular/tablet (controlam o Jogador 1)
   criarControlesToque() {
-    this.toque = { esq: false, dir: false, pulo: false, chinelo: false, estilingue: false, especial: false };
+    this.toque = { esq: false, dir: false, cima: false, baixo: false, pulo: false, chinelo: false, estilingue: false, especial: false };
     this.botoes = [];
     if (!this.sys.game.device.input.touch) return;
     this.input.addPointer(4); // até 5 dedos ao mesmo tempo
@@ -181,6 +243,8 @@ class Fase extends Phaser.Scene {
     };
     botao(80, H - 80, 56, '◀', 'esq', true);
     botao(205, H - 80, 56, '▶', 'dir', true);
+    botao(142, H - 200, 44, '▲', 'cima', true);
+    botao(265, H - 190, 40, '▼', 'baixo', true);
     botao(W - 80, H - 80, 56, '⤒', 'pulo', false);
     botao(W - 200, H - 70, 46, '🩴', 'chinelo', false);
     botao(W - 160, H - 185, 42, '🎯', 'estilingue', false);
@@ -206,8 +270,12 @@ class Fase extends Phaser.Scene {
   criarTexturas() {
     if (this.textures.exists('bloco')) return;
     const g = this.add.graphics();
-    g.fillStyle(0x3b2f6b).fillRect(0, 0, 32, 32).fillStyle(0x52449a).fillRect(0, 0, 32, 6);
+    g.fillStyle(0x24453a).fillRect(0, 0, 32, 32).fillStyle(0x3d7a5a).fillRect(0, 0, 32, 6).fillStyle(0x1b3329).fillRect(6, 14, 8, 6).fillRect(20, 22, 7, 5);
     g.generateTexture('bloco', 32, 32).clear();
+    g.fillStyle(0x6b5a3a).fillRect(0, 0, 32, 12).fillStyle(0x8a7550).fillRect(0, 0, 32, 4).fillStyle(0x4a3d26).fillRect(15, 0, 2, 12);
+    g.generateTexture('ponte', 32, 12).clear();
+    g.fillStyle(0xa8823f).fillRect(4, 0, 4, 32).fillRect(24, 0, 4, 32).fillRect(4, 6, 24, 4).fillRect(4, 22, 24, 4);
+    g.generateTexture('escada', 32, 32).clear();
     g.fillStyle(0xffffff).fillRect(0, 0, 6, 6); g.generateTexture('confete', 6, 6).clear();
     g.fillStyle(0xd9d2c5).fillCircle(5, 5, 5); g.generateTexture('pedra', 10, 10).clear();
     // alien gosmento comum: gota verde com 3 olhos
@@ -246,8 +314,8 @@ class Fase extends Phaser.Scene {
     g.destroy();
   }
 
-  criarJogador(id, idx, x) {
-    const j = this.physics.add.sprite(x, H - 120, id);
+  criarJogador(id, idx, x, y) {
+    const j = this.physics.add.sprite(x, y, id);
     j.setCollideWorldBounds(true);
     j.body.setSize(24, 44).setOffset(4, 2);
     const c = CONTROLES[idx];
@@ -321,7 +389,7 @@ class Fase extends Phaser.Scene {
       if (s.body.blocked.right) s.setVelocityX(-s.velocidade);
       if (s.body.blocked.down) {
         const frente = s.x + (s.body.velocity.x > 0 ? 24 : -24);
-        const temChao = this.chao.getChildren().some(p => frente > p.x && frente < p.x + p.width && Math.abs(p.y - s.body.bottom) < 6);
+        const temChao = this.plataformas.some(p => frente > p.x && frente < p.x + p.width && Math.abs(p.y - s.body.bottom) < 6);
         if (!temChao) s.setVelocityX(-s.body.velocity.x);
       }
       s.setFlipX(s.body.velocity.x < 0);
@@ -382,12 +450,27 @@ class Fase extends Phaser.Scene {
 
     // câmera
     if (vivos.length) {
-      this.alvoCamera.x = vivos.reduce((a, j) => a + j.x, 0) / vivos.length;
-      this.alvoCamera.y = H / 2;
+      // a câmera segue o primeiro jogador vivo; o outro acompanha
+      this.alvoCamera.x = vivos[0].x;
+      this.alvoCamera.y = vivos[0].y;
+    }
+    // co-op: quem ficar fora da tela por 1,5 s é trazido para perto do parceiro
+    if (vivos.length > 1) {
+      const vista = this.cameras.main.worldView;
+      vivos.slice(1).forEach(j => {
+        const fora = !Phaser.Geom.Rectangle.Contains(vista, j.x, j.y);
+        j.foraTela = fora ? (j.foraTela || 0) + delta : 0;
+        if (j.foraTela > 1500 && !j.preso) {
+          const amigo = vivos[0];
+          j.foraTela = 0; j.escalando = false; j.body.setAllowGravity(true);
+          j.setPosition(amigo.x, amigo.y - 40).setVelocity(0, 0);
+          j.invencivel = 1000; this.poeira(j.x, j.y);
+        }
+      });
     }
 
     // caiu no buraco
-    this.jogadores.forEach(j => { if (!j.caido && j.y > H + 60) this.cair(j); });
+    this.jogadores.forEach(j => { if (!j.caido && j.y > MAPA_H + 60) this.cair(j); });
 
     this.hud.setText(this.jogadores.map(j =>
       `${CHARS[j.id].nome}: ${j.caido ? '💫 voltando...' : '❤'.repeat(j.vida) + '♡'.repeat(j.vidaMax - j.vida)}`
@@ -399,6 +482,8 @@ class Fase extends Phaser.Scene {
     const esqK = k.esq.isDown || (p && (p.left || p.leftStick.x < -0.4));
     const dirK = k.dir.isDown || (p && (p.right || p.leftStick.x > 0.4));
     const esq0 = esqK, dir0 = dirK;
+    const cimaK = k.pulo.isDown || (p && (p.up || p.leftStick.y < -0.5));
+    const baixoK = k.baixo.isDown || (p && (p.down || p.leftStick.y > 0.5));
     const pulo = Phaser.Input.Keyboard.JustDown(k.pulo) || (p && p.A && !j.padA);
     const chinelo = Phaser.Input.Keyboard.JustDown(k.chinelo) || (p && p.X && !j.padX);
     const estilingue = Phaser.Input.Keyboard.JustDown(k.estilingue) || (p && p.Y && !j.padY);
@@ -421,7 +506,28 @@ class Fase extends Phaser.Scene {
       this.atualizarPreso(j, pulo2 || chinelo2 || estilingue2 || especial2, delta);
       return;
     }
-    const noChao = j.body.blocked.down;
+    const noChao = j.body.blocked.down || j.body.touching.down;
+    const cima = cimaK || (j.idx === 0 && this.toque && this.toque.cima);
+    const baixo = baixoK || (j.idx === 0 && this.toque && this.toque.baixo);
+
+    // escadas: segure ▲/pular para subir e ▼ para descer
+    const naEscada = this.physics.overlap(j, this.escadas);
+    if (!naEscada && j.escalando) { j.escalando = false; j.body.setAllowGravity(true); if (cima) j.setVelocityY(-330); }
+    if (naEscada && !j.escalando && (cima || baixo)) {
+      j.escalando = true; j.body.setAllowGravity(false);
+    }
+    if (j.escalando) {
+      j.setVelocityY(cima ? -200 : baixo ? 200 : 0);
+      j.setVelocityX(esq ? -100 : dir ? 100 : 0);
+      if (pulo2 && (esq || dir)) { j.escalando = false; j.body.setAllowGravity(true); j.setVelocityY(-450); }
+      if (chinelo2 && j.recargaChinelo === 0) this.chinelada(j);
+      if (estilingue2 && j.recargaEstilingue === 0) this.atirar(j);
+      return;
+    }
+    // descer de plataforma atravessável: ▼ + pular, ou só ▼
+    if (baixo && noChao && !j.descendo && this.pontes.getChildren().some(pt => Math.abs(pt.body.top - j.body.bottom) < 4 && j.x > pt.x && j.x < pt.x + pt.width)) {
+      j.descendo = true; this.time.delayedCall(280, () => { j.descendo = false; });
+    }
     if (noChao) j.pulosExtras = j.id === 'nicolas' ? 1 : 0;
 
     if (j.deslizando > 0) {
@@ -627,6 +733,7 @@ class Fase extends Phaser.Scene {
 
   cair(j) {
     j.caido = true; j.setVisible(false); j.body.enable = false;
+    j.escalando = false; j.body.setAllowGravity(true);
     const outros = this.jogadores.filter(o => !o.caido);
     if (!outros.length) {
       this.acabou = true;
@@ -675,7 +782,7 @@ class Fase extends Phaser.Scene {
   }
 }
 
-new Phaser.Game({
+window.game = new Phaser.Game({
   type: Phaser.AUTO,
   width: W, height: H,
   pixelArt: true,
