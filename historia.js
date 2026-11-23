@@ -33,7 +33,10 @@ const FAMILIA = {
   anne:   { nome: 'Mamãe Anne',   cor: '#ff9be8', detalhe: 'anne',
     pal: { h: 0x8a6038, H: 0xd9b47a, s: 0xe8c09a, d: 0xcfa27c, e: 0x2a1d14, m: 0xc0605a, w: 0xf2e8d2, W: 0xd9ccb0,
            f: 0xff8fb8, g: 0x3f9a4f, o: 0xf0a030, n: 0xffffff, j: 0x4a6fa0, J: 0x3a5a85, k: 0x8a5a3a } },
-  ithalo: { nome: 'Primo Ithalo', cor: '#9bff9b', detalhe: 'bone' },
+  // Ithalo: cabelo escuro curtinho e camisa de time (azul em cima, faixa branca com estrela, vermelha embaixo)
+  ithalo: { nome: 'Primo Ithalo', cor: '#9bff9b', detalhe: 'ithalo',
+    pal: { h: 0x1e1510, s: 0xc08a5c, d: 0xa8744a, e: 0x1a1a1a, m: 0x8a3b2a, b: 0x2a4fc0, n: 0xf2f2f2, y: 0xffd23f, r: 0xd02a2a,
+           j: 0x1e1e22, J: 0x34343a, k: 0xf2f2f2, o: 0x1e1e22 } },
 };
 
 function gerarTexturasHistoria(cena) {
@@ -63,7 +66,15 @@ function gerarTexturasHistoria(cena) {
       const flores = [[5, 11, 'f'], [9, 11, 'g'], [6, 13, 'o'], [10, 13, 'f'], [4, 12, 'g'], [8, 14, 'f'], [5, 15, 'g'], [10, 15, 'o'], [7, 12, 'g']];
       flores.forEach(([x, y, c]) => { if (linhas[y][x] === 'w' || linhas[y][x] === 'W') linhas[y][x] = c; });
     }
-    if (f.detalhe === 'bone') { for (let x = 3; x < 15; x++) linhas[2][x] = 'c'; linhas[3][13] = linhas[3][14] = 'c'; }
+    if (f.detalhe === 'ithalo') {
+      for (let y = 9; y <= 15; y++) for (let x = 0; x < 16; x++) {
+        const c = linhas[y][x];
+        if (c === 'w' || c === 'W') linhas[y][x] = y <= 11 ? 'b' : y === 12 ? 'n' : 'r';
+      }
+      linhas[12][7] = 'y'; linhas[12][8] = 'y';                                  // estrelinha do time
+      [11, 12].forEach(y => { [2, 3, 12, 13].forEach(x => { if (linhas[y][x] !== '.') linhas[y][x] = 'r'; }); }); // mangas vermelhas
+      linhas[0][4] = linhas[0][10] = '.';                                       // cabelo mais curtinho
+    }
     const base = Phaser.Display.Color.HexStringToColor(f.cor).color;
     const pal = f.pal || { h: 0x1d5a7a, s: base, d: base, e: 0x0b2a3a, m: 0x0b2a3a, w: 0xffffff, W: base, j: base, J: 0x1d5a7a, k: 0x1d5a7a, o: 0xffffff, c: 0xffffff };
     pintar(linhas.map(l => l.join('')), pal);
