@@ -261,6 +261,11 @@ class Fase extends Phaser.Scene {
     this.botoes.forEach(b => {
       const agora = dedos.some(p => Phaser.Math.Distance.Between(p.x, p.y, b.x, b.y) <= b.r);
       if (b.segurar) this.toque[b.chave] = agora;
+      // toque duplo rápido em ◀ ou ▶ = cambalhota
+      if ((b.chave === 'esq' || b.chave === 'dir') && agora && !b.antes) {
+        const t = this.time.now;
+        if (b.ultimo && t - b.ultimo < 300) { this.toque.rolar = b.chave === 'esq' ? -1 : 1; b.ultimo = 0; } else b.ultimo = t;
+      }
       else if (agora && !b.antes) this.toque[b.chave] = true; // acabou de apertar
       b.antes = agora;
       b.circ.setFillStyle(0xffffff, agora ? 0.4 : 0.18);
@@ -381,6 +386,20 @@ class Fase extends Phaser.Scene {
     if (s.vitima) { s.setVelocityX(0); return; }
     const alvo = this.maisPerto(s.x, s.y);
     if (s.tipo === 'sombra' || s.tipo === 'comedor' || s.tipo === 'agarrador') {
+      // gosmento comum dá um bote saltitando — antes ele se espreme (aviso para desviar!)
+      s.recSalto = (s.recSalto ?? Phaser.Math.Between(1000, 2500)) - delta;
+      if (s.preparando) { s.setVelocityX(0); return; }
+      if (s.tipo === 'sombra' && alvo && alvo.d < 230 && Math.abs(alvo.j.y - s.y) < 100 && s.body.blocked.down && s.recSalto <= 0) {
+        s.preparando = true; s.setVelocityX(0);
+        const alvoX = alvo.j.x;
+        this.tweens.add({ targets: s, scaleY: 0.6, scaleX: 1.3, duration: 400, yoyo: true, onComplete: () => {
+          s.preparando = false; s.recSalto = 2500;
+          if (!s.active) return;
+          s.setVelocity(Phaser.Math.Clamp((alvoX - s.x) * 1.6, -380, 380), -520);
+        } });
+        return;
+      }
+      if (!s.body.blocked.down && s.recSalto > 2000) return; // no ar durante o bote
       // persegue quem chegar perto
       if (alvo && alvo.d < 260 && Math.abs(alvo.j.y - s.y) < 80 && s.body.blocked.down) {
         s.setVelocityX(Math.sign(alvo.j.x - s.x) * s.velocidade * 1.6);
@@ -418,12 +437,20 @@ class Fase extends Phaser.Scene {
         if (alvo && alvo.d < 500) { s.ativado = true; this.texto(s.x, s.y - 90, 'O GOSMÃO ACORDOU!', '#ff5d73'); this.cameras.main.shake(300, 0.01); }
         return;
       }
+      if (s.preparando) return;
       s.recarga -= delta;
       const raiva = s.vida < s.vidaMax / 2; // metade da vida: fica mais rápido
       if (alvo && s.body.blocked.down) s.setVelocityX(Math.sign(alvo.j.x - s.x) * s.velocidade * (raiva ? 1.7 : 1));
       if (alvo && s.recarga <= 0 && s.body.blocked.down) {
         s.recarga = raiva ? 1300 : 2000;
-        if (Math.random() < 0.5) { s.setVelocityY(-650); s.pulando = true; }
+        if (Math.random() < 0.5) {
+          // aviso: o Gosmão se espreme antes de pular
+          s.setVelocityX(0); s.preparando = true;
+          this.tweens.add({ targets: s, scaleY: 1.8, scaleX: 3.1, duration: 450, yoyo: true, onComplete: () => {
+            s.preparando = false; if (!s.active) return;
+            s.setVelocityY(-650); s.pulando = true;
+          } });
+        }
         else { for (let a = -1; a <= 1; a++) this.cuspir(s, { x: alvo.j.x, y: alvo.j.y + a * 90 }, 300); }
       }
       if (s.pulando && s.body.blocked.down && s.body.velocity.y >= 0) {
@@ -530,8 +557,28 @@ class Fase extends Phaser.Scene {
     }
     if (noChao) j.pulosExtras = j.id === 'nicolas' ? 1 : 0;
 
+    // cambalhota: toque duplo rápido em A/D (←/→, ◀/▶ ou LB/RB no controle)
+    j.recargaRolar = Math.max(0, (j.recargaRolar || 0) - delta);
+    let rolar = 0;
+    const agora = this.time.now;
+    [['esq', -1], ['dir', 1]].forEach(([tecla, d]) => {
+      if (Phaser.Input.Keyboard.JustDown(k[tecla])) {
+        if (j.ultimaTecla === d && agora - j.ultimoToque < 280) rolar = d;
+        j.ultimaTecla = d; j.ultimoToque = agora;
+      }
+    });
+    if (p && (p.L1 || p.R1) && !j.padOmbro) rolar = p.L1 ? -1 : 1;
+    if (p) j.padOmbro = !!(p.L1 || p.R1);
+    if (j.idx === 0 && this.toque && this.toque.rolar) { rolar = this.toque.rolar; this.toque.rolar = 0; }
+    if (rolar && j.recargaRolar === 0 && j.deslizando === 0) {
+      j.direcao = rolar; j.deslizando = 380; j.recargaRolar = 750;
+      j.invencivel = Math.max(j.invencivel, 420); // atravessa inimigos e ataques sem se machucar
+      this.tweens.add({ targets: j, angle: 360 * rolar, duration: 380, onComplete: () => j.setAngle(0) });
+      this.poeira(j.x, j.body.bottom);
+    }
+
     if (j.deslizando > 0) {
-      j.setVelocityX(480 * j.direcao);
+      j.setVelocityX(430 * j.direcao);
     } else {
       if (esq) { j.setVelocityX(-220); j.direcao = -1; }
       else if (dir) { j.setVelocityX(220); j.direcao = 1; }

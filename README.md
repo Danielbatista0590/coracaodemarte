@@ -9,6 +9,7 @@ Jogo de ação e plataforma (inspirado em Dead Cells e Heart of Darkness) com N�
 | Andar | A / D | ← / → |
 | Pular / subir escada | W | ↑ |
 | Descer (escada ou plataforma de madeira) | S | ↓ |
+| Cambalhota (desvia de tudo) | A A ou D D rápido | ← ← ou → → rápido |
 | Chinelo | F | K |
 | Estilingue | G | L |
 | Especial | H | J |
