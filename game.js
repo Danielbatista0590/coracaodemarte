@@ -247,6 +247,7 @@ class Menu extends Phaser.Scene {
     this.add.text(W / 2, 160, 'Nícolas e Theo contra os alienígenas gosmentos', { fontFamily: 'Arial', fontSize: 20, color: '#cfc8ff' }).setOrigin(0.5);
     this.add.text(W / 2, 470, 'Jogador 1: ' + CONTROLES[0].texto, { fontFamily: 'Arial', fontSize: 15, color: '#9a93c9' }).setOrigin(0.5);
     this.add.text(W / 2, 495, 'Jogador 2: ' + CONTROLES[1].texto, { fontFamily: 'Arial', fontSize: 15, color: '#9a93c9' }).setOrigin(0.5);
+    Fase.prototype.criarTexturas.call(this); // gera as texturas uma vez (usadas também nas cenas)
     SOM.pararMusica();
     this.itens = [];
     this.passo1();
@@ -288,7 +289,7 @@ class Menu extends Phaser.Scene {
 
   passo3(jogadores, dificuldade) {
     let liberado = 0;
-    try { liberado = +localStorage.getItem('cdm_mundo') || 0; } catch (e) {}
+    liberado = PROGRESSO.mundo;
     if (liberado <= 0) { this.scene.start('Fase', { jogadores, dificuldade, nivel: 0 }); return; }
     const mundos = FASES.slice(0, liberado + 1);
     this.opcoes('Qual mundo?', mundos.map(f => f.nome), null, i => this.scene.start('Fase', { jogadores, dificuldade, nivel: i }));
@@ -369,6 +370,7 @@ class Fase extends Phaser.Scene {
       const b = this.baus.create(p.x, p.y - 14, 'bau'); b.arma = sorteio[i % sorteio.length];
     });
 
+    this.chefao = null;
     // inimigos — Molezinha: pula 1 a cada 3. Quero a minha mãe!: inclui os MAIÚSCULOS
     this.inimigos = this.physics.add.group();
     let n = 0;
@@ -383,6 +385,7 @@ class Fase extends Phaser.Scene {
     });
     this.gosmas = this.physics.add.group({ allowGravity: false });
     this.bananas = this.physics.add.group();
+    this.moedas = this.physics.add.group(); this.moedasFase = 0;
 
     // projéteis
     this.pedras = this.physics.add.group({ allowGravity: false });
@@ -392,6 +395,8 @@ class Fase extends Phaser.Scene {
 
     this.physics.add.collider(this.jogadores, this.chao);
     this.physics.add.collider(this.itens, this.chao);
+    this.physics.add.collider(this.moedas, this.chao);
+    this.physics.add.collider(this.moedas, this.pontes, null, (m, p) => m.body.velocity.y >= 0 && m.body.bottom <= p.body.top + 12);
     this.physics.add.collider(this.itens, this.pontes);
     this.physics.add.overlap(this.jogadores, this.baus, (j, b) => this.abrirBau(b));
     this.physics.add.overlap(this.jogadores, this.itens, (j, it) => this.pegarArma(j, it));
@@ -417,7 +422,7 @@ class Fase extends Phaser.Scene {
     this.physics.add.collider(this.pedras, this.chao, (pedra) => pedra.destroy());
     this.physics.add.overlap(this.jogadores, this.inimigos, (j, ini) => this.levarDano(j, ini));
     this.physics.add.overlap(this.jogadores, this.chegada, () => {
-      if (this.chefao.active) { if (!this.avisouChefao) { this.avisouChefao = true; this.texto(this.chegada.x, this.chegada.y - 110, 'Derrote ' + (this.fase.chefe === 'rainha' ? 'a ' : 'o ') + this.fase.nomeChefe + ' primeiro!', '#ff5d73'); this.time.delayedCall(1500, () => this.avisouChefao = false); } return; }
+      if (this.chefao && this.chefao.active) { if (!this.avisouChefao) { this.avisouChefao = true; this.texto(this.chegada.x, this.chegada.y - 110, 'Derrote ' + (this.fase.chefe === 'rainha' ? 'a ' : 'o ') + this.fase.nomeChefe + ' primeiro!', '#ff5d73'); this.time.delayedCall(1500, () => this.avisouChefao = false); } return; }
       this.vitoria();
     });
     this.physics.add.overlap(this.jogadores, this.gosmas, (j, g) => { if (!g.active) return; g.destroy(); this.levarDano(j, g, true); });
@@ -541,6 +546,8 @@ class Fase extends Phaser.Scene {
       });
     });
     g.fillStyle(0x9dff4a).fillCircle(7, 7, 7); g.generateTexture('gosma', 14, 14).clear();
+    g.fillStyle(0x2f9a4a).fillCircle(6, 6, 6).fillStyle(0x7dff95).fillCircle(6, 6, 4.5).fillStyle(0xe6ffd0).fillRect(4, 3, 2, 4);
+    g.generateTexture('moeda', 12, 12).clear();
     // decoração do cenário
     g.fillStyle(0x2f7a3e).fillRect(9, 8, 2, 16).fillRect(4, 14, 6, 2).fillRect(10, 11, 6, 2).fillStyle(0x9dff4a).fillCircle(10, 6, 5).fillStyle(0xe6ffd0).fillCircle(9, 5, 2);
     g.generateTexture('planta', 20, 24).clear();
@@ -599,7 +606,7 @@ class Fase extends Phaser.Scene {
 
   criarInimigo(x, y, tipo) {
     const s = this.inimigos.create(x, y, tipo === 'chefao' ? 'sombra' : tipo);
-    s.tipo = tipo; s.chefe = tipo === 'chefao' || tipo === 'rainha';
+    s.tipo = tipo; s.chefe = tipo === 'chefao' || tipo === 'rainha' || tipo === 'cerebro'; s.voa = tipo === 'rainha' || tipo === 'cerebro';
     s.setCollideWorldBounds(true).setBounce(0);
     if (tipo === 'sombra') {
       s.vida = 4; s.velocidade = Phaser.Math.Between(70, 110);
@@ -826,6 +833,7 @@ SOM.tocar('cuspe');
     vivos.forEach(j => this.controlarJogador(j, delta));
 
     this.inimigos.getChildren().slice().forEach(s => s.active && this.pensarInimigo(s, delta));
+    this.atualizarMoedas();
     this.itens.getChildren().forEach(it => { if (it.bloqueado && !this.physics.overlap(it.bloqueado, it)) it.bloqueado = null; });
 
     // câmera
@@ -833,7 +841,7 @@ SOM.tocar('cuspe');
       // a câmera segue o primeiro jogador vivo; o outro acompanha
       this.alvoCamera.x = vivos[0].x;
       // na luta contra a Rainha (que voa), a câmera olha mais para cima
-      const olharCima = this.chefao && this.chefao.active && this.chefao.ativado && this.chefao.tipo === 'rainha' ? 110 : 0;
+      const olharCima = this.chefao && this.chefao.active && this.chefao.ativado && this.chefao.voa ? 110 : 0;
       this.alvoCamera.y = vivos[0].y - olharCima;
     }
     // co-op: quem ficar fora da tela por 1,5 s é trazido para perto do parceiro
@@ -856,7 +864,7 @@ SOM.tocar('cuspe');
 
     this.hud.setText(this.jogadores.map(j =>
       `${CHARS[j.id].nome}: ${j.caido ? '💫 voltando...' : '❤'.repeat(Math.max(0, j.vida)) + '♡'.repeat(Math.max(0, j.vidaMax - j.vida)) + '  🩴' + ARMAS[j.arma].icone}`
-    ).join('     ') + (this.chefao.active && this.chefao.ativado ? `     ${this.fase.nomeChefe}: ${'█'.repeat(Math.max(0, Math.ceil(this.chefao.vida / 3)))}` : ''));
+    ).join('     ') + `     🪙 ${PROGRESSO.moedas}` + (this.chefao && this.chefao.active && this.chefao.ativado ? `     ${this.fase.nomeChefe}: ${'█'.repeat(Math.max(0, Math.ceil(this.chefao.vida / 3)))}` : ''));
   }
 
   controlarJogador(j, delta) {
@@ -1200,6 +1208,28 @@ SOM.tocar('cuspe');
   }
 
   // ---- morte por derretimento
+  // ---- moedas de gosma (ficam salvas e servem para a loja dos hologramas)
+  soltarMoedas(x, y, n) {
+    for (let i = 0; i < n; i++) {
+      const m = this.moedas.create(x, y, 'moeda');
+      m.setBounce(0.5).setVelocity(Phaser.Math.Between(-160, 160), Phaser.Math.Between(-380, -200)).setCollideWorldBounds(true);
+      m.pegavel = this.time.now + 400;
+    }
+  }
+  atualizarMoedas() {
+    this.moedas.getChildren().slice().forEach(m => {
+      if (this.time.now < m.pegavel) return;
+      const perto = this.maisPerto(m.x, m.y);
+      if (!perto) return;
+      if (perto.d < 26) { m.destroy(); PROGRESSO.ganhar(1); this.moedasFase++; SOM.tocar('moeda'); return; }
+      if (perto.d < 130) { // ímã
+        m.body.setAllowGravity(false);
+        const ang = Phaser.Math.Angle.Between(m.x, m.y, perto.j.x, perto.j.y);
+        m.setVelocity(Math.cos(ang) * 420, Math.sin(ang) * 420);
+      } else m.body.setAllowGravity(true);
+    });
+  }
+
   confete(s) {
     if (s.zzz) { s.zzz.destroy(); s.zzz = null; }
     const vitima = s.vitima; s.vitima = null;
@@ -1223,6 +1253,7 @@ SOM.tocar('cuspe');
     pingos.explode(14);
     this.time.delayedCall(800, () => pingos.destroy());
     SOM.tocar('splort');
+    this.soltarMoedas(x, base - 20, s.chefe ? 25 : s.tipo === 'comedor' ? 4 : 2);
     this.texto(x, base - 50, s.chefe ? this.fase.nomeChefe + ' DERRETEU!' : 'SPLORT!', '#7dff95');
   }
 
@@ -1271,7 +1302,7 @@ SOM.tocar('cuspe');
     SOM.pararMusica(); SOM.tocar('vitoria');
     const cfg = this.registry.get('config');
     const proximo = this.nivel + 1;
-    try { if (proximo > (+localStorage.getItem('cdm_mundo') || 0)) localStorage.setItem('cdm_mundo', Math.min(proximo, FASES.length - 1)); } catch (e) {}
+    PROGRESSO.liberar(Math.min(proximo, FASES.length - 1));
     if (proximo < FASES.length) {
       this.mensagem(this.fase.nome.split(':')[0].toUpperCase() + ' COMPLETO!\nAperte R ou toque na tela para ir ao ' + FASES[proximo].nome.split(':')[0], '#7cff6b');
       cfg.nivel = proximo; this.registry.set('config', cfg);

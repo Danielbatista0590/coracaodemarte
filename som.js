@@ -72,6 +72,8 @@ const SOM = (() => {
     chefe:      () => { tom({ tipo: 'sawtooth', de: 90, ate: 60, dur: 1.0, vol: 0.3 }); tom({ tipo: 'sawtooth', de: 95, ate: 62, dur: 1.0, vol: 0.2 }); ruido({ dur: 1.0, vol: 0.3, de: 500, ate: 150 }); },
     vitoria:    () => [523, 659, 784, 659, 784, 1047].forEach((f, i) => tom({ de: f, dur: i === 5 ? 0.5 : 0.14, vol: 0.2, atraso: i * 0.13 })),
     derrota:    () => [392, 349, 311, 262].forEach((f, i) => tom({ tipo: 'triangle', de: f, dur: 0.3, vol: 0.2, atraso: i * 0.25 })),
+    moeda:      () => { tom({ tipo: 'square', de: 988, dur: 0.05, vol: 0.08 }); tom({ tipo: 'square', de: 1319, dur: 0.1, vol: 0.08, atraso: 0.05 }); },
+    holograma:  () => [880, 1175, 1568].forEach((f, i) => tom({ tipo: 'sine', de: f, dur: 0.12, vol: 0.12, atraso: i * 0.06 })),
     menu:       () => tom({ tipo: 'triangle', de: 700, dur: 0.06, vol: 0.15 }),
   };
 
