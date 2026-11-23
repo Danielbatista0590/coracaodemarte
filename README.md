@@ -21,7 +21,8 @@ Dica: se o controle não responder, aperte qualquer botão dele com a página ab
 
 O mapa é desenhado em texto no `game.js` (constante `MAPA`), gerado por `tools/mapa.py`. Legenda: `#` bloco, `-` plataforma atravessável, `H` escada, `P` início, `E` saída, `B` chefe, `g v c m a` inimigos (maiúsculas só no "Quero a minha mãe!").
 
-**Armas:** abra os baús espalhados pelo mapa. A arma nova vai para o botão de arma e a antiga fica no chão (dá para pegar de volta). O chinelo está sempre no outro botão.
+**Baús:** cada baú solta um item sorteado. Ao chegar perto aparece uma plaquinha com o que é; para pegar aperte **S / E / ↓** (no controle, ↓ no D-pad; no celular, o botão **✋ PEGAR**). Se não quiser, é só deixar.
+Itens: 🍎 maçã (+1 coração), 🍕 pizza (+3), 🎂 bolo (enche tudo), armas (⚽ bola, 🚁 drone, 💦 pistola d'água, 🎯 estilingue — a antiga fica no chão), ⚡ turbo da arma (até 3 níveis), 🚀 jetpack (no ar, segure pular), 👟 tênis turbo, 🫧 escudo-bolha (3 golpes), ⛑️ capacete (+2 corações), 💰 saco de moedas. Os itens valem até o fim da fase.
 
 **Som:** efeitos e música são gerados por código (`som.js`). Tecla **M** ou o botão 🔊 liga/desliga.
 

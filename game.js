@@ -324,8 +324,36 @@ const ARMAS = {
   agua:       { nome: "Pistola d'água", icone: '💦', recarga: 550 },
 };
 
+// o que pode sair de um baú (sorteado pelo peso)
+const ITENS_BAU = {
+  maca:       { peso: 12, nome: 'Maçã',              icone: '🍎', desc: '+1 coração' },
+  pizza:      { peso: 9,  nome: 'Pizza',             icone: '🍕', desc: '+3 corações' },
+  bolo:       { peso: 4,  nome: 'Bolo da vovó',      icone: '🎂', desc: 'enche todos os corações' },
+  arma_bola:  { peso: 7,  arma: 'bola' },
+  arma_drone: { peso: 6,  arma: 'drone' },
+  arma_agua:  { peso: 7,  arma: 'agua' },
+  arma_estilingue: { peso: 3, arma: 'estilingue' },
+  turbo:      { peso: 10, nome: 'Turbo da arma',     icone: '⚡', desc: 'sua arma fica mais forte e mais rápida' },
+  jetpack:    { peso: 6,  nome: 'Jetpack',           icone: '🚀', desc: 'no ar, segure PULAR para voar' },
+  tenis:      { peso: 7,  nome: 'Tênis turbo',       icone: '👟', desc: 'corre muito mais rápido' },
+  escudo:     { peso: 8,  nome: 'Escudo-bolha',      icone: '🫧', desc: 'aguenta 3 golpes sem perder coração' },
+  capacete:   { peso: 5,  nome: 'Capacete',          icone: '⛑️', desc: '+2 corações a mais' },
+  moedas:     { peso: 7,  nome: 'Saco de moedas',    icone: '💰', desc: '+15 moedas de gosma' },
+};
+function infoItem(id) {
+  const it = ITENS_BAU[id];
+  if (it.arma) return { nome: ARMAS[it.arma].nome, icone: ARMAS[it.arma].icone, desc: 'arma nova (a sua atual fica no chão)' };
+  return it;
+}
+function sortearItem() {
+  const lista = Object.entries(ITENS_BAU), total = lista.reduce((a, [, v]) => a + v.peso, 0);
+  let r = Math.random() * total;
+  for (const [id, v] of lista) { r -= v.peso; if (r <= 0) return id; }
+  return 'maca';
+}
+
 const CONTROLES = [
-  { esq: 'A', dir: 'D', pulo: 'W', baixo: 'S', chinelo: 'F', estilingue: 'G', especial: 'H', texto: 'A/D andar · W pular/subir · S descer · F chinelo · G arma · H especial' },
+  { esq: 'A', dir: 'D', pulo: 'W', baixo: 'S', chinelo: 'F', estilingue: 'G', especial: 'H', texto: 'A/D andar · W pular/subir · S descer/pegar · F chinelo · G arma · H especial' },
   { esq: 'LEFT', dir: 'RIGHT', pulo: 'UP', baixo: 'DOWN', chinelo: 'K', estilingue: 'L', especial: 'J', texto: 'Setas andar/pular/subir/descer · K chinelo · L arma · J especial' },
 ];
 
@@ -543,9 +571,9 @@ class Fase extends Phaser.Scene {
     // baús
     this.baus = this.physics.add.staticGroup();
     this.itens = this.physics.add.group();
-    const sorteio = Phaser.Utils.Array.Shuffle(['bola', 'drone', 'agua', 'bola', 'drone', 'agua']);
+
     pecas.filter(p => p.ch === 'T').forEach((p, i) => {
-      const b = this.baus.create(p.x, p.y - 14, 'bau'); b.arma = sorteio[i % sorteio.length];
+      this.baus.create(p.x, p.y - 14, 'bau');
     });
 
     this.chefao = null;
@@ -592,14 +620,13 @@ class Fase extends Phaser.Scene {
     this.physics.add.collider(this.moedas, this.pontes, null, (m, p) => m.body.velocity.y >= 0 && m.body.bottom <= p.body.top + 12);
     this.physics.add.collider(this.itens, this.pontes);
     this.physics.add.overlap(this.jogadores, this.baus, (j, b) => this.abrirBau(b));
-    this.physics.add.overlap(this.jogadores, this.itens, (j, it) => this.pegarArma(j, it));
     this.physics.add.collider(this.bolas, this.chao);
     this.physics.add.collider(this.bolas, this.pontes, null, (b, p) => b.body.velocity.y >= 0 && b.body.bottom <= p.body.top + 12);
     this.physics.add.overlap(this.bolas, this.inimigos, (b, s) => this.bolaAcerta(b, s));
     this.physics.add.collider(this.bombas, this.chao, (b) => this.explodir(b));
     this.physics.add.collider(this.bombas, this.pontes, (b) => this.explodir(b));
     this.physics.add.overlap(this.bombas, this.inimigos, (b) => this.explodir(b));
-    this.physics.add.overlap(this.gotas, this.inimigos, (g, s) => { if (!g.active) return; const d = g.body.velocity.x > 0 ? 1 : -1; g.destroy(); this.molhar(s, d); });
+    this.physics.add.overlap(this.gotas, this.inimigos, (g, s) => { if (!g.active) return; const d = g.body.velocity.x > 0 ? 1 : -1, dn = g.dano; g.destroy(); this.molhar(s, d, dn); });
     this.physics.add.collider(this.gotas, this.chao, (g) => g.destroy());
     this.physics.add.overlap(this.jogadores, this.perigos, (j, o) => this.levarDano(j, o, true));
     this.physics.add.collider(this.perigos, this.chao, (o) => { if (o.body.blocked.left || o.body.blocked.right) o.destroy(); });
@@ -612,7 +639,7 @@ class Fase extends Phaser.Scene {
       if (!pedra.active || !ini.active) return;
       const dir = pedra.body.velocity.x > 0 ? 1 : -1; // ler a direção ANTES de destruir a pedra
       pedra.destroy();
-      this.acertar(ini, 1, dir);
+      this.acertar(ini, pedra.dano || 1, dir);
     });
     this.physics.add.collider(this.pedras, this.chao, (pedra) => pedra.destroy());
     this.physics.add.overlap(this.jogadores, this.inimigos, (j, ini) => this.levarDano(j, ini));
@@ -636,6 +663,7 @@ class Fase extends Phaser.Scene {
     this.hud = this.add.text(16, 12, '', { fontFamily: 'Arial', fontSize: 20, color: '#ffffff' }).setScrollFactor(0).setDepth(10);
     this.input.keyboard.on('keydown-ESC', () => this.pausar());
     this.input.keyboard.on('keydown-P', () => this.pausar());
+    this.teclaE = this.input.keyboard.addKey('E');
     this.criarControlesToque();
     this.continuar = null;
     ouvirControle(this, b => {
@@ -697,7 +725,7 @@ class Fase extends Phaser.Scene {
   }
 
   criarControlesToque() {
-    this.toque = { esq: false, dir: false, cima: false, baixo: false, pulo: false, chinelo: false, estilingue: false, especial: false };
+    this.toque = { pegar: false, esq: false, dir: false, cima: false, baixo: false, pulo: false, chinelo: false, estilingue: false, especial: false };
     this.botoes = [];
     if (!this.sys.game.device.input.touch) return;
     this.input.addPointer(4); // até 5 dedos ao mesmo tempo
@@ -711,6 +739,9 @@ class Fase extends Phaser.Scene {
     botao(205, H - 80, 56, '▶', 'dir', true);
     botao(142, H - 200, 44, '▲', 'cima', true);
     botao(265, H - 190, 40, '▼', 'baixo', true);
+    this.botaoPegar = this.add.text(W / 2, H - 70, '✋ PEGAR', { fontFamily: 'Arial Black', fontSize: 26, color: '#000', backgroundColor: '#ffe14d', padding: { x: 16, y: 8 } })
+      .setOrigin(0.5).setScrollFactor(0).setDepth(32).setInteractive().setVisible(false);
+    this.botaoPegar.on('pointerdown', () => { this.toque.pegar = true; });
     botao(W - 80, H - 80, 56, '⤒', 'pulo', false);
     botao(W - 200, H - 70, 46, '🩴', 'chinelo', false);
     botao(W - 160, H - 185, 42, '🎯', 'estilingue', false);
@@ -811,6 +842,7 @@ class Fase extends Phaser.Scene {
     g.fillStyle(0x8a5a2b).fillRect(0, 8, 32, 20).fillStyle(0xa8723a).fillRect(0, 0, 32, 5).fillStyle(0x2a1a0a).fillRect(2, 8, 28, 4).fillStyle(0xffd23f).fillRect(0, 12, 32, 2);
     g.generateTexture('bau_aberto', 32, 28).clear();
     // ícones das armas no chão (com aura)
+    g.fillStyle(0xffef5d, 0.35).fillCircle(16, 16, 16).fillStyle(0xffef5d, 0.25).fillCircle(16, 16, 11); g.generateTexture('item_base', 32, 32).clear();
     const aura = () => g.fillStyle(0xffef5d, 0.35).fillCircle(14, 14, 14);
     aura(); g.fillStyle(0x8a5a2b).fillRect(12, 12, 4, 12).fillRect(6, 6, 4, 8).fillRect(18, 6, 4, 8).fillStyle(0xd9d2c5).fillCircle(14, 8, 3); g.generateTexture('item_estilingue', 28, 28).clear();
     aura(); g.fillStyle(0xffffff).fillCircle(14, 14, 8).fillStyle(0x222222).fillCircle(14, 14, 3); g.generateTexture('item_bola', 28, 28).clear();
@@ -1145,6 +1177,12 @@ SOM.tocar('cuspe');
     this.lerToque();
     const vivos = this.jogadores.filter(j => !j.caido);
     vivos.forEach(j => this.controlarJogador(j, delta));
+    this.jogadores.forEach(j => {
+      if (j.escudo > 0 && !j.caido) {
+        if (!j.bolhaEscudo) j.bolhaEscudo = this.add.circle(j.x, j.y, 30, 0x6bd1ff, 0.15).setStrokeStyle(2, 0xbfeeff, 0.8).setDepth(6);
+        j.bolhaEscudo.setPosition(j.x, j.y).setVisible(true);
+      } else if (j.bolhaEscudo) j.bolhaEscudo.setVisible(false);
+    });
 
     this.inimigos.getChildren().slice().forEach(s => s.active && this.pensarInimigo(s, delta));
     this.atualizarMoedas();
@@ -1161,7 +1199,7 @@ SOM.tocar('cuspe');
       if (d.visto) return;
       if (vivos.some(j => Math.abs(j.x - d.img.x) < 90 && Math.abs(j.y - d.img.y) < 120)) { d.visto = true; this.mostrarDica(d); }
     });
-    this.itens.getChildren().forEach(it => { if (it.bloqueado && !this.physics.overlap(it.bloqueado, it)) it.bloqueado = null; });
+    this.atualizarItens();
 
     // câmera
     if (vivos.length) {
@@ -1190,7 +1228,7 @@ SOM.tocar('cuspe');
     this.jogadores.forEach(j => { if (!j.caido && j.y > this.mapaH + 60) this.cair(j); });
 
     this.hud.setText(this.jogadores.map(j =>
-      `${CHARS[j.id].nome}: ${j.caido ? '💫 voltando...' : '❤'.repeat(Math.max(0, j.vida)) + '♡'.repeat(Math.max(0, j.vidaMax - j.vida)) + '  🩴' + ARMAS[j.arma].icone}`
+      `${CHARS[j.id].nome}: ${j.caido ? '💫 voltando...' : '❤'.repeat(Math.max(0, j.vida)) + '♡'.repeat(Math.max(0, j.vidaMax - j.vida)) + '  🩴' + ARMAS[j.arma].icone + (j.turbo ? '⚡' + j.turbo : '') + (j.jetpack ? ' 🚀' + Math.round(j.combustivel) + '%' : '') + (j.tenis ? ' 👟' : '') + (j.escudo ? ' 🫧' + j.escudo : '') + (j.capacete ? ' ⛑️' : '')}`
     ).join('     ') + `     🪙 ${PROGRESSO.moedas}` + (this.chefao && this.chefao.active && this.chefao.ativado ? `     ${this.fase.nomeChefe}: ${'█'.repeat(Math.max(0, Math.ceil(this.chefao.vida / 3)))}` : ''));
   }
 
@@ -1201,6 +1239,10 @@ SOM.tocar('cuspe');
     const esq0 = esqK, dir0 = dirK;
     const cimaK = k.pulo.isDown || (p && (p.up || p.leftStick.y < -0.5));
     const baixoK = k.baixo.isDown || (p && (p.down || p.leftStick.y > 0.5));
+    const baixoPad = !!(p && (p.down || p.leftStick.y > 0.5));
+    const baixoAgora = Phaser.Input.Keyboard.JustDown(k.baixo) || (baixoPad && !j.baixoAntes); j.baixoAntes = baixoPad;
+    const toqueP = j.idx === 0 && this.toque && this.toque.pegar; if (toqueP) this.toque.pegar = false;
+    if ((baixoAgora || toqueP || (j.idx === 0 && Phaser.Input.Keyboard.JustDown(this.teclaE))) && !j.preso && this.pegarItem(j)) { j.baixoAntes = true; j.travaDescida = this.time.now + 400; }
     const pulo = Phaser.Input.Keyboard.JustDown(k.pulo) || (p && p.A && !j.padA);
     const chinelo = Phaser.Input.Keyboard.JustDown(k.chinelo) || (p && p.X && !j.padX);
     const estilingue = Phaser.Input.Keyboard.JustDown(k.estilingue) || (p && p.Y && !j.padY);
@@ -1244,7 +1286,7 @@ SOM.tocar('cuspe');
       return;
     }
     // descer de plataforma atravessável: ▼ + pular, ou só ▼
-    if (baixo && noChao && !j.descendo && this.pontes.getChildren().some(pt => Math.abs(pt.body.top - j.body.bottom) < 4 && j.x > pt.x && j.x < pt.x + pt.width)) {
+    if (baixo && noChao && !j.descendo && this.time.now > (j.travaDescida || 0) && this.pontes.getChildren().some(pt => Math.abs(pt.body.top - j.body.bottom) < 4 && j.x > pt.x && j.x < pt.x + pt.width)) {
       j.descendo = true; this.time.delayedCall(280, () => { j.descendo = false; });
     }
     if (noChao) j.pulosExtras = j.id === 'nicolas' && !this.fase.semPoderes ? 1 : 0;
@@ -1272,8 +1314,9 @@ SOM.tocar('cuspe');
     if (j.deslizando > 0) {
       j.setVelocityX(430 * j.direcao);
     } else {
-      if (esq) { j.setVelocityX(-220); j.direcao = -1; }
-      else if (dir) { j.setVelocityX(220); j.direcao = 1; }
+      const vel = j.tenis ? 320 : 220;
+      if (esq) { j.setVelocityX(-vel); j.direcao = -1; }
+      else if (dir) { j.setVelocityX(vel); j.direcao = 1; }
       else j.setVelocityX(0);
     }
     j.setFlipX(j.direcao < 0);
@@ -1286,6 +1329,15 @@ SOM.tocar('cuspe');
       else if (j.pulosExtras > 0) { j.pulosExtras--; j.setVelocityY(-500); SOM.tocar('pulo'); this.poeira(j.x, j.y + 20); }
     }
 
+    // jetpack: no ar, segurar pular faz voar enquanto tiver combustível
+    if (j.jetpack) {
+      const segurando = k.pulo.isDown || (p && p.A) || (j.idx === 0 && this.toque && this.toque.cima);
+      if (noChao) j.combustivel = Math.min(100, j.combustivel + delta * 0.08);
+      else if (segurando && j.combustivel > 0 && j.body.velocity.y > -120 && !pulo2) {
+        j.setVelocityY(-240); j.combustivel = Math.max(0, j.combustivel - delta * 0.045);
+        if (Math.random() < 0.5) { const f = this.add.circle(j.x - 8 * j.direcao, j.y + 20, 4, 0xffa63d, 0.9); this.tweens.add({ targets: f, y: f.y + 20, alpha: 0, duration: 250, onComplete: () => f.destroy() }); }
+      }
+    }
     // especiais para ganhar tempo: Nícolas joga casca de banana; Theo solta o MEGA PUM
     if (especial2 && j.recargaEspecial === 0 && this.fase.semPoderes) { if (!this.avisoPoder) { this.avisoPoder = true; this.texto(j.x, j.y - 50, 'Ainda sem superpoderes...', '#aaaaaa'); this.time.delayedCall(2000, () => this.avisoPoder = false); } }
     else if (especial2 && j.recargaEspecial === 0) {
@@ -1315,7 +1367,7 @@ SOM.tocar('cuspe');
 
   // ---- armas do botão 2
   usarArma(j) {
-    j.recargaEstilingue = ARMAS[j.arma].recarga;
+    j.recargaEstilingue = ARMAS[j.arma].recarga * (1 - 0.15 * (j.turbo || 0));
     if (j.arma === 'estilingue') this.atirar(j);
     else if (j.arma === 'bola') this.chutarBola(j);
     else if (j.arma === 'drone') this.lancarDrone(j);
@@ -1324,7 +1376,7 @@ SOM.tocar('cuspe');
 
   atirar(j) {
     SOM.tocar('pedra');
-    const p = this.pedras.create(j.x + 16 * j.direcao, j.y - 6, 'pedra');
+    const p = this.pedras.create(j.x + 16 * j.direcao, j.y - 6, 'pedra'); p.dano = this.danoArma(j, 1);
     p.setVelocityX(650 * j.direcao);
     this.time.delayedCall(900, () => p.active && p.destroy());
   }
@@ -1334,13 +1386,13 @@ SOM.tocar('cuspe');
     SOM.tocar('chute');
     const b = this.bolas.create(j.x + 18 * j.direcao, j.y + 4, 'bola');
     b.setCircle(9).setBounce(0.75, 0.75).setCollideWorldBounds(true).setVelocity(520 * j.direcao, -260).setAngularVelocity(600 * j.direcao);
-    b.acertados = new Set();
+    b.acertados = new Set(); b.dano = this.danoArma(j, 2);
     this.time.delayedCall(2600, () => { if (b.active) { this.poeira(b.x, b.y); b.destroy(); } });
   }
   bolaAcerta(b, s) {
     if (!b.active || !s.active || b.acertados.has(s)) return;
     b.acertados.add(s);
-    this.acertar(s, 2, b.body.velocity.x >= 0 ? 1 : -1);
+    this.acertar(s, b.dano || 2, b.body.velocity.x >= 0 ? 1 : -1);
     b.setVelocity(-b.body.velocity.x * 0.8, -300);
     SOM.tocar('gol');
     this.texto(b.x, b.y - 20, 'GOL!', '#ffffff');
@@ -1351,7 +1403,7 @@ SOM.tocar('cuspe');
     SOM.tocar('drone');
     const d = this.add.image(j.x, j.y - 30, 'drone').setDepth(8).setFlipX(j.direcao < 0);
     this.tweens.add({ targets: d, x: j.x + 170 * j.direcao, y: j.y - 110, duration: 550, ease: 'Sine.easeOut', onComplete: () => {
-      const b = this.bombas.create(d.x, d.y + 10, 'bomba');
+      const b = this.bombas.create(d.x, d.y + 10, 'bomba'); b.dano = this.danoArma(j, 3);
       b.setVelocity(0, 50);
       this.time.delayedCall(2000, () => b.active && this.explodir(b));
       this.tweens.add({ targets: d, y: d.y - 200, alpha: 0, duration: 600, onComplete: () => d.destroy() });
@@ -1359,7 +1411,7 @@ SOM.tocar('cuspe');
   }
   explodir(b) {
     if (!b.active) return;
-    const x = b.x, y = b.y; b.destroy();
+    const x = b.x, y = b.y, danoB = b.dano || 3; b.destroy();
     const brilho = this.add.particles(x, y, 'confete', {
       speed: { min: 80, max: 300 }, lifespan: 900, gravityY: 300, scale: { start: 1.2, end: 0 },
       tint: [0xff6bd5, 0xffef5d, 0x6bd1ff, 0xc77dff, 0xffffff], emitting: false,
@@ -1371,7 +1423,7 @@ SOM.tocar('cuspe');
     SOM.tocar('explosao');
     this.texto(x, y - 30, 'PURPURINA!', '#ff6bd5');
     this.inimigos.getChildren().slice().forEach(s => {
-      if (s.active && Phaser.Math.Distance.Between(s.x, s.y, x, y) < 100) this.acertar(s, 3, s.x >= x ? 1 : -1);
+      if (s.active && Phaser.Math.Distance.Between(s.x, s.y, x, y) < 100) this.acertar(s, danoB, s.x >= x ? 1 : -1);
     });
   }
 
@@ -1381,41 +1433,78 @@ SOM.tocar('cuspe');
     for (let i = 0; i < 6; i++) {
       this.time.delayedCall(i * 55, () => {
         if (j.caido) return;
-        const g = this.gotas.create(j.x + 16 * j.direcao, j.y - 4 + Phaser.Math.Between(-4, 4), 'gota');
+        const g = this.gotas.create(j.x + 16 * j.direcao, j.y - 4 + Phaser.Math.Between(-4, 4), 'gota'); g.dano = this.danoArma(j, 0.5);
         g.setVelocity(560 * j.direcao, Phaser.Math.Between(-30, 30));
         this.time.delayedCall(550, () => g.active && g.destroy());
       });
     }
   }
-  molhar(s, d) {
+  molhar(s, d, dano = 0.5) {
     if (!s.active || s.escudo) return;
-    s.vida -= 0.5;
+    s.vida -= dano;
     s.setTint(0x6bd1ff); this.time.delayedCall(80, () => s.active && s.clearTint());
     if (!s.chefe) { s.setVelocityX(260 * d); if (!(s.atordoado > 0)) { s.atordoado = 220; s.empurrao = 220; } }
     if (s.vida <= 0) this.confete(s);
   }
 
-  // ---- baús e troca de arma
+  // ---- baús: sai um item sorteado; o jogador decide se pega (▼ / S / E / botão PEGAR) ou deixa
   abrirBau(b) {
     if (b.aberto) return;
     b.aberto = true; b.setTexture('bau_aberto'); SOM.tocar('bau');
-    this.texto(b.x, b.y - 30, ARMAS[b.arma].nome + '!', '#ffe14d');
-    this.soltarItem(b.x, b.y - 20, b.arma);
+    this.soltarItem(b.x, b.y - 20, sortearItem());
   }
-  soltarItem(x, y, arma, largadoPor) {
-    const it = this.itens.create(x, y, 'item_' + arma);
-    it.bloqueado = largadoPor || null; // quem largou só pega de novo depois de sair de cima
-    it.arma = arma; it.espera = this.time.now + 700; it.setVelocityY(-250);
+  soltarItem(x, y, id, largadoPor) {
+    const it = this.itens.create(x, y, 'item_base');
+    it.id = id; it.bloqueado = largadoPor || null;
+    it.espera = this.time.now + 500; it.setVelocityY(-250);
+    it.rotulo = this.add.text(x, y, infoItem(id).icone, { fontSize: 22 }).setOrigin(0.5).setDepth(3);
     this.tweens.add({ targets: it, scale: 1.15, duration: 400, yoyo: true, repeat: -1 });
+    return it;
   }
-  pegarArma(j, it) {
-    if (!it.active || this.time.now < it.espera || j.caido || it.bloqueado === j) return;
-    const velha = j.arma;
-    j.arma = it.arma; it.destroy(); SOM.tocar('arma');
-    this.texto(j.x, j.y - 40, ARMAS[j.arma].icone + ' ' + ARMAS[j.arma].nome, '#ffffff');
-    if (velha !== j.arma) this.soltarItem(j.x - 20 * j.direcao, j.y - 10, velha, j); // larga a antiga no chão
+  // mostra a placa "pegar?" para o item mais perto de cada jogador
+  atualizarItens() {
+    if (this.placaItem) { this.placaItem.destroy(); this.placaItem = null; }
+    this.itemPerto = new Map();
+    this.itens.getChildren().forEach(it => {
+      it.rotulo.setPosition(it.x, it.y);
+      if (it.bloqueado && !this.physics.overlap(it.bloqueado, it)) it.bloqueado = null;
+    });
+    this.jogadores.forEach(j => {
+      if (j.caido) return;
+      const perto = this.itens.getChildren().filter(i => i.active && this.time.now > i.espera && i.bloqueado !== j && Math.abs(i.x - j.x) < 36 && Math.abs(i.y - j.y) < 50);
+      const it = perto.sort((a, b) => Math.abs(a.x - j.x) - Math.abs(b.x - j.x))[0];
+      if (it) this.itemPerto.set(j, it);
+    });
+    const primeiro = [...this.itemPerto.values()][0];
+    if (primeiro) {
+      const inf = infoItem(primeiro.id);
+      const toque = this.sys.game.device.input.touch;
+      this.placaItem = this.add.text(primeiro.x, primeiro.y - 56, `${inf.icone} ${inf.nome}\n${inf.desc}\n${toque ? '✋ toque em PEGAR' : '▼ S / E / ↓ para pegar'}  ·  ou deixe aí`,
+        { fontFamily: 'Arial', fontSize: 14, color: '#ffffff', backgroundColor: '#000000cc', padding: { x: 8, y: 5 }, align: 'center' }).setOrigin(0.5, 1).setDepth(20);
+    }
+    if (this.botaoPegar) this.botaoPegar.setVisible(!!primeiro);
   }
-
+  pegarItem(j) {
+    const it = this.itemPerto && this.itemPerto.get(j);
+    if (!it || !it.active) return false;
+    const id = it.id, inf = infoItem(id), dado = ITENS_BAU[id];
+    it.rotulo.destroy(); it.destroy();
+    SOM.tocar('arma');
+    this.texto(j.x, j.y - 46, inf.icone + ' ' + inf.nome + '!', '#ffe14d');
+    if (dado.arma) {
+      const velha = j.arma; j.arma = dado.arma;
+      if (velha !== j.arma) this.soltarItem(j.x - 20 * j.direcao, j.y - 10, 'arma_' + velha, j);
+    } else if (id === 'maca' || id === 'pizza' || id === 'bolo') {
+      j.vida = Math.min(j.vidaMax, j.vida + (id === 'maca' ? 1 : id === 'pizza' ? 3 : 99));
+    } else if (id === 'turbo') { j.turbo = Math.min(3, (j.turbo || 0) + 1); this.texto(j.x, j.y - 70, 'Arma nível ' + (j.turbo + 1), '#ffef5d'); }
+    else if (id === 'jetpack') { j.jetpack = true; j.combustivel = 100; }
+    else if (id === 'tenis') { j.tenis = true; }
+    else if (id === 'escudo') { j.escudo = 3; }
+    else if (id === 'capacete') { j.vidaMax += 2; j.vida += 2; j.capacete = true; }
+    else if (id === 'moedas') { PROGRESSO.ganhar(15); this.moedasFase += 15; SOM.tocar('moeda'); }
+    return true;
+  }
+  danoArma(j, base) { return base * (1 + 0.5 * (j.turbo || 0)); }
 
   acertar(s, dano, dir) {
     if (!s.active) return;
@@ -1593,6 +1682,12 @@ SOM.tocar('cuspe');
   levarDano(j, s, semPisao) {
     if (j.invencivel > 0 || j.caido) return;
     if (!semPisao && s.atordoado > 0 && !s.chefe) return; // tonto/desmaiado não machuca
+    if (j.escudo > 0 && !(!semPisao && !s.chefe && j.body.velocity.y > 100 && j.y < s.y - 15)) {
+      j.escudo--; j.invencivel = 900; SOM.tocar('escapou');
+      this.texto(j.x, j.y - 50, j.escudo ? `ESCUDO! (${j.escudo})` : 'O escudo estourou!', '#6bd1ff');
+      j.setVelocity(j.x < s.x ? -200 : 200, -250);
+      return;
+    }
     if (!semPisao && !s.chefe && j.body.velocity.y > 100 && j.y < s.y - 15) { // pulou em cima
       j.setVelocityY(-400); this.acertar(s, 1, j.direcao); return;
     }
