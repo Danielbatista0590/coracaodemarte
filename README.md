@@ -30,3 +30,6 @@ O mapa é desenhado em texto no `game.js` (constante `MAPA`), gerado por `tools/
 **Fases:** Prólogo na Terra (sem poderes) → Mundo 1: Cavernas de Marte (Gosmão) → Mundo 2: Torre da Nave-Mãe, descendo (Rainha Gosma) → Mundo 3: Núcleo de Marte (Grande Cérebro) → final.
 Entre as fases há cenas da história (`historia.js`) e a loja dos hologramas (`loja.js`). Moedas e melhorias ficam salvas no navegador (`progresso.js`).
 Mapas: `tools/mapa0.py`, `tools/mapa.py`, `tools/mapa2.py`, `tools/mapa3.py`. Pixel art dos alienígenas: `tools/inimigos.py`.
+
+**Pausa:** P, Esc, Start no controle ou o botão ☰ no celular.
+**Bandeiras (pontos de salvamento):** tocar numa bandeira vermelha deixa ela verde. Se os dois caírem, voltam para a última bandeira com os corações cheios. No "Quero a minha mãe!" são só 3 tentativas por fase.

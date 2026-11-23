@@ -198,7 +198,7 @@ const MAPA0 = [
 const TIPOS = { g: 'sombra', v: 'morcego', c: 'cuspidor', m: 'comedor', a: 'agarrador', s: 'saltador' };
 
 const FASES = [
-  { nome: 'Prólogo: Terra', mapa: MAPA0, chefe: null, musica: 'fase1', semPoderes: true, saida: 'foguete', cenaDepois: 'nave',
+  { nome: 'Prólogo: Terra', mapa: MAPA0, salvar: [[70, 20]], chefe: null, musica: 'fase1', semPoderes: true, saida: 'foguete', cenaDepois: 'nave',
     fundo: '#0b1030', rochas: 0x141e45, bolhas: 0xffffff, bloco: 'bloco0', decor: ['flor', 'tufo', 'tufo'], pingos: false,
     dicas: [
       { c: 9, r: 20, quem: 'anne', via: 'gritando da janela', texto: 'Meninos, cuidado! Andem com A/D (ou ◀ ▶) e pulem com W (ou ⤒)!' },
@@ -207,7 +207,7 @@ const FASES = [
       { c: 60, r: 20, quem: 'daniel', via: 'gritando do quintal', texto: 'Subam a escada da casa da árvore segurando W (ou ▲). Tem um baú lá em cima!' },
       { c: 87, r: 20, quem: 'anne', via: 'gritando de longe', texto: 'A nave foi para o fim do pasto! Corram!' },
     ] },
-  { nome: 'Mundo 1: Cavernas de Marte', mapa: MAPA, chefe: 'chefao', nomeChefe: 'GOSMÃO', musica: 'fase1', cenaDepois: 'centro',
+  { nome: 'Mundo 1: Cavernas de Marte', mapa: MAPA, salvar: [[40, 19], [66, 31], [93, 13]], chefe: 'chefao', nomeChefe: 'GOSMÃO', musica: 'fase1', cenaDepois: 'centro',
     fundo: '#0f2418', rochas: 0x163626, bolhas: 0x7dff95, bloco: 'bloco', decor: ['planta', 'planta', 'cristal', 'cogumelinho'], pingos: true,
     dicas: [
       { c: 7, r: 43, quem: 'anne', texto: 'Agora vocês têm poderes! Especial no H (★) e cambalhota com dois toques rápidos para o lado.' },
@@ -215,14 +215,14 @@ const FASES = [
       { c: 33, r: 43, quem: 'daniel', texto: 'Se o bocão engolir vocês, apertem os botões bem rápido para escapar!' },
       { c: 82, r: 13, quem: 'daniel', texto: 'É o Gosmão! Quando ele se espremer, deem cambalhota para escapar do tremor.' },
     ] },
-  { nome: 'Mundo 2: Torre da Nave-Mãe', mapa: MAPA2, chefe: 'rainha', nomeChefe: 'RAINHA GOSMA', musica: 'fase2', cenaDepois: 'nucleo',
+  { nome: 'Mundo 2: Torre da Nave-Mãe', mapa: MAPA2, salvar: [[20, 28], [20, 42], [40, 49]], chefe: 'rainha', nomeChefe: 'RAINHA GOSMA', musica: 'fase2', cenaDepois: 'nucleo',
     fundo: '#16102b', rochas: 0x2a2050, bolhas: 0xc77dff, bloco: 'bloco2', decor: ['cristal', 'cogumelinho'], pingos: true,
     dicas: [
       { c: 8, r: 7, quem: 'anne', texto: 'Para descer pelas tábuas de madeira, fiquem em cima delas e apertem S (ou ▼).' },
       { c: 12, r: 21, quem: 'ithalo', texto: 'Esse sapo laranja se agacha antes de pular. Fiquem espertos!' },
       { c: 46, r: 49, quem: 'daniel', texto: 'Lá embaixo está a Rainha Gosma! Quando ela piscar vermelho, cambalhota! Depois do rasante ela cansa: chinelo nela!' },
     ] },
-  { nome: 'Mundo 3: Núcleo de Marte', mapa: MAPA3, chefe: 'cerebro', nomeChefe: 'GRANDE CÉREBRO', musica: 'fase2', saida: 'lucca', cenaDepois: 'final',
+  { nome: 'Mundo 3: Núcleo de Marte', mapa: MAPA3, salvar: [[34, 34]], chefe: 'cerebro', nomeChefe: 'GRANDE CÉREBRO', musica: 'fase2', saida: 'lucca', cenaDepois: 'final',
     fundo: '#1f0a1c', rochas: 0x3a1238, bolhas: 0xff8fb8, bloco: 'bloco3', decor: ['cogumelinho', 'cristal', 'planta'], pingos: true,
     dicas: [
       { c: 4, r: 34, quem: 'anne', texto: 'Este é o centro de Marte, a cidade dos gosmentos. O Lucca está do outro lado!' },
@@ -353,6 +353,34 @@ function ouvirControle(cena, fn) {
     if (dir && dir !== antes) fn(dir < 0 ? BOTAO.CIMA : BOTAO.BAIXO, p);
     antes = dir;
   });
+}
+
+// ---- tela de pausa (por cima da fase)
+class Pausa extends Phaser.Scene {
+  constructor() { super('Pausa'); }
+  create() {
+    this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6);
+    this.add.text(W / 2, 130, 'PAUSADO', { fontFamily: 'Arial Black', fontSize: 48, color: '#ffffff', stroke: '#000', strokeThickness: 6 }).setOrigin(0.5);
+    const ops = [['▶ Continuar', () => this.voltar()], ['↻ Recomeçar a fase', () => this.ir('Fase')], ['⌂ Menu principal', () => this.ir('Menu')]];
+    this.sel = 0;
+    this.botoes = ops.map(([t, f], i) => {
+      const b = this.add.text(W / 2, 240 + i * 66, t, { fontFamily: 'Arial', fontSize: 28, color: '#ffffff', backgroundColor: '#2b2350', padding: { x: 18, y: 8 } })
+        .setOrigin(0.5).setInteractive({ useHandCursor: true });
+      b.on('pointerdown', f); b.acao = f; return b;
+    });
+    this.add.text(W / 2, H - 40, 'P / Esc / Start: continuar   ·   🎮 setas + A', { fontFamily: 'Arial', fontSize: 14, color: '#aaaaaa' }).setOrigin(0.5);
+    this.marcar();
+    ['P', 'ESC'].forEach(k => this.input.keyboard.on('keydown-' + k, () => this.voltar()));
+    ouvirControle(this, b => {
+      if (b === BOTAO.START || b === BOTAO.B) this.voltar();
+      if (b === BOTAO.CIMA) { this.sel = (this.sel + 2) % 3; this.marcar(); }
+      if (b === BOTAO.BAIXO) { this.sel = (this.sel + 1) % 3; this.marcar(); }
+      if (b === BOTAO.A) this.botoes[this.sel].acao();
+    });
+  }
+  marcar() { this.botoes.forEach((b, i) => b.setBackgroundColor(i === this.sel ? '#6b4fd1' : '#2b2350')); }
+  voltar() { this.scene.resume('Fase'); this.scene.stop(); }
+  ir(destino) { this.scene.stop('Fase'); this.scene.start(destino); }
 }
 
 // o que vem depois de vencer uma fase: cena da história → loja dos hologramas → próxima fase
@@ -521,6 +549,14 @@ class Fase extends Phaser.Scene {
     });
 
     this.chefao = null;
+    // pontos de salvamento (bandeiras): quem cair volta para a última bandeira tocada
+    this.inicio = { x: this.jogadores[0].x, y: this.jogadores[0].y };
+    this.ponto = null;
+    this.bandeiras = (this.fase.salvar || []).map(([c, r]) => {
+      const b = this.add.image(c * T + T / 2, (r + 1) * T, 'bandeira').setOrigin(0.5, 1).setDepth(-1);
+      b.ativa = false; return b;
+    });
+    this.tempoInicio = this.time.now; this.derretidos = 0; this.tentativas = 3;
     // hologramas com dicas espalhados pela fase
     this.dicas = (this.fase.dicas || []).map(d => {
       const h = this.add.image(d.c * T + T / 2, (d.r + 1) * T - 24, 'holo_' + d.quem).setAlpha(d.via ? 0 : 0.7).setDepth(-1);
@@ -598,16 +634,24 @@ class Fase extends Phaser.Scene {
     this.mostrarTitulo();
     this.input.keyboard.on('keydown-M', () => SOM.alternarMudo());
     this.hud = this.add.text(16, 12, '', { fontFamily: 'Arial', fontSize: 20, color: '#ffffff' }).setScrollFactor(0).setDepth(10);
-    this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
+    this.input.keyboard.on('keydown-ESC', () => this.pausar());
+    this.input.keyboard.on('keydown-P', () => this.pausar());
     this.criarControlesToque();
     this.continuar = null;
     ouvirControle(this, b => {
       if (this.acabou && this.continuar && (b === BOTAO.A || b === BOTAO.START)) { const f = this.continuar; this.continuar = null; f(); }
-      if (b === BOTAO.VIEW) this.scene.start('Menu');
+      else if (!this.acabou && b === BOTAO.START) this.pausar();
+      if (b === BOTAO.VIEW) this.pausar();
     });
   }
 
   // botões na tela para celular/tablet (controlam o Jogador 1)
+  pausar() {
+    if (this.acabou || this.scene.isPaused()) return;
+    this.scene.pause();
+    this.scene.launch('Pausa');
+  }
+
   mostrarDica(d) {
     SOM.tocar('holograma');
     if (this.painelDica) this.painelDica.destroy();
@@ -673,7 +717,7 @@ class Fase extends Phaser.Scene {
     botao(W - 55, H - 200, 40, '★', 'especial', false);
     const menu = this.add.text(W - 16, 12, '☰', { fontFamily: 'Arial', fontSize: 30, color: '#ffffff' })
       .setOrigin(1, 0).setScrollFactor(0).setDepth(30).setInteractive();
-    menu.on('pointerdown', () => this.scene.start('Menu'));
+    menu.on('pointerdown', () => this.pausar());
     const som = this.add.text(W - 60, 12, SOM.mudo ? '🔇' : '🔊', { fontFamily: 'Arial', fontSize: 26 })
       .setOrigin(1, 0).setScrollFactor(0).setDepth(30).setInteractive();
     som.on('pointerdown', () => som.setText(SOM.alternarMudo() ? '🔇' : '🔊'));
@@ -715,6 +759,10 @@ class Fase extends Phaser.Scene {
     g.generateTexture('bloco3', 32, 32).clear();
     g.fillStyle(0xff8fb8, 0.9).fillTriangle(0, 24, 20, 0, 40, 24).fillStyle(0xffd0e4).fillTriangle(12, 24, 20, 8, 28, 24);
     g.generateTexture('onda', 40, 24).clear();
+    g.fillStyle(0xaaaaaa).fillRect(2, 0, 3, 48).fillStyle(0xff5d73).fillTriangle(5, 2, 26, 9, 5, 16);
+    g.generateTexture('bandeira', 28, 48).clear();
+    g.fillStyle(0xaaaaaa).fillRect(2, 0, 3, 48).fillStyle(0x7cff6b).fillTriangle(5, 2, 26, 9, 5, 16).fillStyle(0xffffff).fillCircle(12, 9, 2);
+    g.generateTexture('bandeira_ok', 28, 48).clear();
     g.fillStyle(0x2f7a2f).fillRect(7, 6, 2, 10).fillStyle(0xffe14d).fillCircle(8, 5, 2).fillStyle(0xff9be8).fillCircle(5, 4, 2.5).fillCircle(11, 4, 2.5).fillCircle(8, 1.5, 2.5).fillCircle(8, 7, 2.5).fillStyle(0xffe14d).fillCircle(8, 4.5, 2);
     g.generateTexture('flor', 16, 16).clear();
     g.fillStyle(0x3fa83f).fillTriangle(0, 12, 3, 0, 6, 12).fillTriangle(5, 12, 9, 2, 12, 12).fillTriangle(10, 12, 14, 4, 16, 12);
@@ -1100,6 +1148,15 @@ SOM.tocar('cuspe');
 
     this.inimigos.getChildren().slice().forEach(s => s.active && this.pensarInimigo(s, delta));
     this.atualizarMoedas();
+    this.bandeiras.forEach(b => {
+      if (b.ativa) return;
+      if (vivos.some(j => Math.abs(j.x - b.x) < 40 && Math.abs(j.y - (b.y - 30)) < 70)) {
+        this.bandeiras.forEach(o => o.setTexture('bandeira'));
+        b.ativa = true; b.setTexture('bandeira_ok'); this.ponto = { x: b.x, y: b.y - 40 };
+        SOM.tocar('escapou'); this.texto(b.x, b.y - 80, 'PONTO SALVO!', '#7cff6b');
+        vivos.forEach(j => { j.vida = Math.max(j.vida, Math.ceil(j.vidaMax / 2)); });
+      }
+    });
     this.dicas.forEach(d => {
       if (d.visto) return;
       if (vivos.some(j => Math.abs(j.x - d.img.x) < 90 && Math.abs(j.y - d.img.y) < 120)) { d.visto = true; this.mostrarDica(d); }
@@ -1527,6 +1584,7 @@ SOM.tocar('cuspe');
     pingos.explode(14);
     this.time.delayedCall(800, () => pingos.destroy());
     SOM.tocar('splort');
+    this.derretidos = (this.derretidos || 0) + 1;
     this.soltarMoedas(x, base - 20, s.chefe ? 25 : s.tipo === 'comedor' ? 4 : 2);
     this.texto(x, base - 50, s.chefe ? this.fase.nomeChefe + ' DERRETEU!' : 'SPLORT!', '#7dff95');
   }
@@ -1552,10 +1610,28 @@ SOM.tocar('cuspe');
     j.escalando = false; j.body.setAllowGravity(true);
     const outros = this.jogadores.filter(o => !o.caido);
     if (!outros.length) {
-      this.acabou = true;
-      SOM.pararMusica(); SOM.tocar('derrota');
-      this.mensagem('Os gosmentos venceram desta vez...\nAperte R ou toque na tela para tentar de novo', '#ff5d73');
-      this.esperarRecomeco();
+      // no "Quero a minha mãe!" são só 3 tentativas por fase; nos outros, sempre volta para a bandeira
+      const dificil = this.dif.quantidade === 'mais';
+      if (dificil) this.tentativas--;
+      if (dificil && this.tentativas <= 0) {
+        this.acabou = true;
+        SOM.pararMusica(); SOM.tocar('derrota');
+        this.mensagem('Os gosmentos venceram desta vez...\nAperte R ou toque na tela para recomeçar a fase', '#ff5d73');
+        this.esperarRecomeco();
+        return;
+      }
+      SOM.tocar('derrota');
+      const aviso = this.mensagem((this.ponto ? 'Voltando para a bandeira...' : 'Voltando para o começo...') + (dificil ? `\nTentativas restantes: ${this.tentativas}` : ''), '#ffe14d');
+      this.time.delayedCall(1800, () => {
+        aviso.destroy();
+        const p = this.ponto || this.inicio;
+        this.jogadores.forEach((o, i) => {
+          if (o.preso) this.soltar(o, false);
+          o.caido = false; o.vida = o.vidaMax; o.invencivel = 2000;
+          o.body.enable = true; o.setVisible(true);
+          o.setPosition(p.x + i * 30, p.y).setVelocity(0, 0);
+        });
+      });
       return;
     }
     // no co-op, volta ao lado do parceiro depois de 4 segundos
@@ -1580,7 +1656,10 @@ SOM.tocar('cuspe');
     PROGRESSO.liberar(Math.min(proximo, FASES.length - 1));
     const destino = sequenciaDepois(this.nivel, cfg);
     const titulo = this.fase.nome.split(':')[0].toUpperCase();
-    this.mensagem(proximo < FASES.length ? `${titulo} COMPLETO!\n🪙 +${this.moedasFase} moedas de gosma\nToque ou aperte R para continuar` : 'VOCÊS RESGATARAM O LUCCA!\nToque ou aperte R para continuar', '#7cff6b');
+    const seg = Math.round((this.time.now - this.tempoInicio) / 1000);
+    const tempo = `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')}`;
+    const placar = `⏱ ${tempo}   💧 ${this.derretidos} alienígenas derretidos   🪙 +${this.moedasFase}`;
+    this.mensagem((proximo < FASES.length ? `${titulo} COMPLETO!` : 'VOCÊS RESGATARAM O LUCCA!') + `\n${placar}\nToque ou aperte R para continuar`, '#7cff6b');
     const ir = () => { if (this.indo) return; this.indo = true; this.scene.start(destino.cena, destino.dados); };
     this.input.keyboard.once('keydown-R', ir);
     this.time.delayedCall(800, () => { this.input.once('pointerdown', ir); this.continuar = ir; });
@@ -1593,7 +1672,7 @@ SOM.tocar('cuspe');
   }
 
   mensagem(t, cor) {
-    this.add.text(W / 2, H / 2, t, { fontFamily: 'Arial Black', fontSize: 30, color: cor, align: 'center', stroke: '#000', strokeThickness: 6 })
+    return this.add.text(W / 2, H / 2, t, { fontFamily: 'Arial Black', fontSize: 30, color: cor, align: 'center', stroke: '#000', strokeThickness: 6 })
       .setOrigin(0.5).setScrollFactor(0).setDepth(20);
   }
 
@@ -1616,5 +1695,5 @@ window.game = new Phaser.Game({
   input: { gamepad: true },
   physics: { default: 'arcade', arcade: { gravity: { y: 1400 }, debug: false } },
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [Menu, Fase, Cena, Loja],
+  scene: [Menu, Fase, Cena, Loja, Pausa],
 });
