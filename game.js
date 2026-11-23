@@ -134,6 +134,7 @@ class Menu extends Phaser.Scene {
     this.add.text(W / 2, 160, 'Nícolas e Theo contra os alienígenas gosmentos', { fontFamily: 'Arial', fontSize: 20, color: '#cfc8ff' }).setOrigin(0.5);
     this.add.text(W / 2, 470, 'Jogador 1: ' + CONTROLES[0].texto, { fontFamily: 'Arial', fontSize: 15, color: '#9a93c9' }).setOrigin(0.5);
     this.add.text(W / 2, 495, 'Jogador 2: ' + CONTROLES[1].texto, { fontFamily: 'Arial', fontSize: 15, color: '#9a93c9' }).setOrigin(0.5);
+    SOM.pararMusica();
     this.itens = [];
     this.passo1();
   }
@@ -155,10 +156,10 @@ class Menu extends Phaser.Scene {
     textos.forEach((t, i) => {
       const op = this.add.text(W / 2, 270 + i * 58, `${i + 1}  —  ${t}`, { fontFamily: 'Arial', fontSize: 26, color: cores ? cores[i] : '#ffffff', backgroundColor: '#2b2350', padding: { x: 14, y: 8 } })
         .setOrigin(0.5).setInteractive({ useHandCursor: true });
-      op.on('pointerdown', () => { this.telaCheia(); aoEscolher(i); });
+      op.on('pointerdown', () => { SOM.iniciar(); SOM.tocar('menu'); this.telaCheia(); aoEscolher(i); });
       this.itens.push(op);
     });
-    ['ONE', 'TWO', 'THREE'].forEach((k, i) => this.input.keyboard.once('keydown-' + k, () => aoEscolher(i)));
+    ['ONE', 'TWO', 'THREE'].forEach((k, i) => this.input.keyboard.once('keydown-' + k, () => { SOM.iniciar(); SOM.tocar('menu'); aoEscolher(i); }));
   }
 
   passo1() {
@@ -300,6 +301,8 @@ class Fase extends Phaser.Scene {
     this.alvoCamera = this.add.zone(0, 0, 1, 1);
     this.cameras.main.startFollow(this.alvoCamera, true, 0.1, 0.1);
 
+    SOM.musica('fase1');
+    this.input.keyboard.on('keydown-M', () => SOM.alternarMudo());
     this.hud = this.add.text(16, 12, '', { fontFamily: 'Arial', fontSize: 20, color: '#ffffff' }).setScrollFactor(0).setDepth(10);
     this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
     this.criarControlesToque();
@@ -328,6 +331,9 @@ class Fase extends Phaser.Scene {
     const menu = this.add.text(W - 16, 12, '☰', { fontFamily: 'Arial', fontSize: 30, color: '#ffffff' })
       .setOrigin(1, 0).setScrollFactor(0).setDepth(30).setInteractive();
     menu.on('pointerdown', () => this.scene.start('Menu'));
+    const som = this.add.text(W - 60, 12, SOM.mudo ? '🔇' : '🔊', { fontFamily: 'Arial', fontSize: 26 })
+      .setOrigin(1, 0).setScrollFactor(0).setDepth(30).setInteractive();
+    som.on('pointerdown', () => som.setText(SOM.alternarMudo() ? '🔇' : '🔊'));
   }
 
   // lê todos os dedos na tela a cada quadro: vários botões ao mesmo tempo, e dá pra arrastar o dedo
@@ -465,6 +471,7 @@ class Fase extends Phaser.Scene {
   }
 
   cuspir(s, alvo, vel = 320) {
+SOM.tocar('cuspe'); 
     const g = this.gosmas.create(s.x, s.y - 10, 'gosma');
     const ang = Phaser.Math.Angle.Between(s.x, s.y, alvo.x, alvo.y);
     g.setVelocity(Math.cos(ang) * vel, Math.sin(ang) * vel);
@@ -492,7 +499,7 @@ class Fase extends Phaser.Scene {
         this.tweens.add({ targets: s, scaleY: 0.6, scaleX: 1.3, duration: 400, yoyo: true, onComplete: () => {
           s.preparando = false; s.recSalto = 2500;
           if (!s.active) return;
-          s.setVelocity(Phaser.Math.Clamp((alvoX - s.x) * 1.6, -380, 380), -520);
+          SOM.tocar('bote'); s.setVelocity(Phaser.Math.Clamp((alvoX - s.x) * 1.6, -380, 380), -520);
         } });
         return;
       }
@@ -531,7 +538,7 @@ class Fase extends Phaser.Scene {
       }
     } else if (s.tipo === 'chefao') {
       if (!s.ativado) {
-        if (alvo && alvo.d < 500) { s.ativado = true; this.texto(s.x, s.y - 90, 'O GOSMÃO ACORDOU!', '#ff5d73'); this.cameras.main.shake(300, 0.01); }
+        if (alvo && alvo.d < 500) { s.ativado = true; SOM.tocar('chefe'); SOM.musica('chefe'); this.texto(s.x, s.y - 90, 'O GOSMÃO ACORDOU!', '#ff5d73'); this.cameras.main.shake(300, 0.01); }
         return;
       }
       if (s.preparando) return;
@@ -551,7 +558,7 @@ class Fase extends Phaser.Scene {
         else { for (let a = -1; a <= 1; a++) this.cuspir(s, { x: alvo.j.x, y: alvo.j.y + a * 90 }, 300); }
       }
       if (s.pulando && s.body.blocked.down && s.body.velocity.y >= 0) {
-        s.pulando = false; this.cameras.main.shake(200, 0.012);
+        s.pulando = false; SOM.tocar('tremor'); this.cameras.main.shake(200, 0.012);
         this.jogadores.forEach(j => { if (!j.caido && j.body.blocked.down && Math.abs(j.x - s.x) < 180) this.levarDano(j, s, true); });
       }
       s.setFlipX(s.body.velocity.x < 0);
@@ -672,7 +679,7 @@ class Fase extends Phaser.Scene {
     if (j.idx === 0 && this.toque && this.toque.rolar) { rolar = this.toque.rolar; this.toque.rolar = 0; }
     if (rolar && j.recargaRolar === 0 && j.deslizando === 0) {
       j.direcao = rolar; j.deslizando = 380; j.recargaRolar = 750;
-      j.invencivel = Math.max(j.invencivel, 420); // atravessa inimigos e ataques sem se machucar
+      SOM.tocar('cambalhota'); j.invencivel = Math.max(j.invencivel, 420); // atravessa inimigos e ataques sem se machucar
       this.tweens.add({ targets: j, angle: 360 * rolar, duration: 380, onComplete: () => j.setAngle(0) });
       this.poeira(j.x, j.body.bottom);
     }
@@ -690,8 +697,8 @@ class Fase extends Phaser.Scene {
     j.setTexture(andandoAgora ? j.id + '_andando' : j.id);
 
     if (pulo2) {
-      if (noChao) j.setVelocityY(-560);
-      else if (j.pulosExtras > 0) { j.pulosExtras--; j.setVelocityY(-500); this.poeira(j.x, j.y + 20); }
+      if (noChao) { j.setVelocityY(-560); SOM.tocar('pulo'); }
+      else if (j.pulosExtras > 0) { j.pulosExtras--; j.setVelocityY(-500); SOM.tocar('pulo'); this.poeira(j.x, j.y + 20); }
     }
 
     // especiais para ganhar tempo: Nícolas joga casca de banana; Theo solta o MEGA PUM
@@ -705,7 +712,7 @@ class Fase extends Phaser.Scene {
   }
 
   chinelada(j) {
-    j.recargaChinelo = 300;
+    j.recargaChinelo = 300; SOM.tocar('chinelada');
     const c = this.add.image(j.x + 24 * j.direcao, j.y, 'chinelo').setAngle(-60 * j.direcao);
     this.tweens.add({ targets: c, angle: 60 * j.direcao, duration: 120, onComplete: () => c.destroy() });
     const area = new Phaser.Geom.Rectangle(j.x + (j.direcao > 0 ? 0 : -60), j.y - 30, 60, 60);
@@ -713,6 +720,7 @@ class Fase extends Phaser.Scene {
       if (s.active && Phaser.Geom.Rectangle.Overlaps(area, s.getBounds())) {
         const critico = Math.random() < 0.2;
         this.acertar(s, critico ? 3 : 1, j.direcao);
+        if (critico) SOM.tocar('critico');
         if (critico) this.texto(s.x, s.y - 30, 'CHINELADA!', '#ffef5d');
       }
     });
@@ -728,6 +736,7 @@ class Fase extends Phaser.Scene {
   }
 
   atirar(j) {
+    SOM.tocar('pedra');
     const p = this.pedras.create(j.x + 16 * j.direcao, j.y - 6, 'pedra');
     p.setVelocityX(650 * j.direcao);
     this.time.delayedCall(900, () => p.active && p.destroy());
@@ -735,6 +744,7 @@ class Fase extends Phaser.Scene {
 
   // bola: quica no chão e nas paredes, acerta vários inimigos
   chutarBola(j) {
+    SOM.tocar('chute');
     const b = this.bolas.create(j.x + 18 * j.direcao, j.y + 4, 'bola');
     b.setCircle(9).setBounce(0.75, 0.75).setCollideWorldBounds(true).setVelocity(520 * j.direcao, -260).setAngularVelocity(600 * j.direcao);
     b.acertados = new Set();
@@ -745,11 +755,13 @@ class Fase extends Phaser.Scene {
     b.acertados.add(s);
     this.acertar(s, 2, b.body.velocity.x >= 0 ? 1 : -1);
     b.setVelocity(-b.body.velocity.x * 0.8, -300);
+    SOM.tocar('gol');
     this.texto(b.x, b.y - 20, 'GOL!', '#ffffff');
   }
 
   // drone: voa para frente e solta uma bomba de purpurina
   lancarDrone(j) {
+    SOM.tocar('drone');
     const d = this.add.image(j.x, j.y - 30, 'drone').setDepth(8).setFlipX(j.direcao < 0);
     this.tweens.add({ targets: d, x: j.x + 170 * j.direcao, y: j.y - 110, duration: 550, ease: 'Sine.easeOut', onComplete: () => {
       const b = this.bombas.create(d.x, d.y + 10, 'bomba');
@@ -769,6 +781,7 @@ class Fase extends Phaser.Scene {
     const onda = this.add.circle(x, y, 20, 0xff6bd5, 0.4);
     this.tweens.add({ targets: onda, radius: 100, alpha: 0, duration: 350, onComplete: () => onda.destroy() });
     this.cameras.main.shake(150, 0.006);
+    SOM.tocar('explosao');
     this.texto(x, y - 30, 'PURPURINA!', '#ff6bd5');
     this.inimigos.getChildren().slice().forEach(s => {
       if (s.active && Phaser.Math.Distance.Between(s.x, s.y, x, y) < 100) this.acertar(s, 3, s.x >= x ? 1 : -1);
@@ -777,6 +790,7 @@ class Fase extends Phaser.Scene {
 
   // pistola d'água: rajada de gotas que empurra
   esguichar(j) {
+    SOM.tocar('agua');
     for (let i = 0; i < 6; i++) {
       this.time.delayedCall(i * 55, () => {
         if (j.caido) return;
@@ -797,7 +811,7 @@ class Fase extends Phaser.Scene {
   // ---- baús e troca de arma
   abrirBau(b) {
     if (b.aberto) return;
-    b.aberto = true; b.setTexture('bau_aberto');
+    b.aberto = true; b.setTexture('bau_aberto'); SOM.tocar('bau');
     this.texto(b.x, b.y - 30, ARMAS[b.arma].nome + '!', '#ffe14d');
     this.soltarItem(b.x, b.y - 20, b.arma);
   }
@@ -810,7 +824,7 @@ class Fase extends Phaser.Scene {
   pegarArma(j, it) {
     if (!it.active || this.time.now < it.espera || j.caido || it.bloqueado === j) return;
     const velha = j.arma;
-    j.arma = it.arma; it.destroy();
+    j.arma = it.arma; it.destroy(); SOM.tocar('arma');
     this.texto(j.x, j.y - 40, ARMAS[j.arma].icone + ' ' + ARMAS[j.arma].nome, '#ffffff');
     if (velha !== j.arma) this.soltarItem(j.x - 20 * j.direcao, j.y - 10, velha, j); // larga a antiga no chão
   }
@@ -818,7 +832,7 @@ class Fase extends Phaser.Scene {
 
   acertar(s, dano, dir) {
     if (!s.active) return;
-    s.vida -= dano;
+    s.vida -= dano; if (s.vida > 0) SOM.tocar('acerto');
     s.setTint(0xffffff);
     this.time.delayedCall(80, () => s.active && s.clearTint());
     if (s.tipo === 'chefao') { s.setVelocityX(80 * dir); }
@@ -829,7 +843,7 @@ class Fase extends Phaser.Scene {
 
   // ---- especial do Nícolas: casca de banana
   jogarBanana(j) {
-    j.recargaEspecial = 2500;
+    j.recargaEspecial = 2500; SOM.tocar('banana');
     const b = this.bananas.create(j.x + 20 * j.direcao, j.y - 10, 'banana');
     b.setVelocity(260 * j.direcao, -280).setAngularVelocity(400 * j.direcao);
     b.usos = 3; b.dono = j;
@@ -842,6 +856,7 @@ class Fase extends Phaser.Scene {
     s.setVelocity(420 * dir, -520);
     s.atordoado = 2200; s.empurrao = 900;
     this.tweens.add({ targets: s, angle: 360 * dir, duration: 700, onComplete: () => s.active && s.setAngle(180) });
+    SOM.tocar('escorregar');
     this.texto(s.x, s.y - 40, 'ESCORREGOU!', '#ffe14d');
     this.desmaiar(s, 0);
     b.usos--; if (b.usos <= 0) b.destroy();
@@ -857,6 +872,7 @@ class Fase extends Phaser.Scene {
     });
     fumaca.explode(40); this.time.delayedCall(1100, () => fumaca.destroy());
     this.cameras.main.shake(250, 0.008);
+    SOM.tocar('pum');
     this.texto(j.x, j.y - 60, 'PRRRRRUUUM!', '#c4e86b');
     this.inimigos.getChildren().slice().forEach(s => {
       if (!s.active || Phaser.Math.Distance.Between(s.x, s.y, j.x, j.y) > 200) return;
@@ -880,8 +896,10 @@ class Fase extends Phaser.Scene {
     if (s.tipo === 'comedor') {
       j.setVisible(false);
       this.tweens.add({ targets: s, scaleX: 1.4, scaleY: 1.25, duration: 150 });
+      SOM.tocar('nhac');
       this.texto(s.x, s.y - 50, 'NHAC!', '#ffef5d');
     } else {
+      SOM.tocar('pegou');
       this.texto(s.x, s.y - 40, 'PEGOU!', '#ff6bd5');
     }
     j.avisoPreso = this.add.text(s.x, s.y - 70, '', { fontFamily: 'Arial Black', fontSize: 18, color: '#ffffff', stroke: '#000', strokeThickness: 5 }).setOrigin(0.5).setDepth(15);
@@ -926,7 +944,7 @@ class Fase extends Phaser.Scene {
       s.vitima = null; s.atordoado = 1500;
       this.tweens.add({ targets: s, scaleX: 1, scaleY: 1, duration: 150 });
       j.setVelocity(j.x <= s.x ? -320 : 320, -420);
-      if (escapou) { this.texto(s.x, s.y - 50, 'ESCAPOU!', '#7cff6b'); this.acertar(s, 1, j.x <= s.x ? 1 : -1); }
+      if (escapou) { SOM.tocar('escapou'); this.texto(s.x, s.y - 50, 'ESCAPOU!', '#7cff6b'); this.acertar(s, 1, j.x <= s.x ? 1 : -1); }
     }
   }
 
@@ -953,6 +971,7 @@ class Fase extends Phaser.Scene {
     });
     pingos.explode(14);
     this.time.delayedCall(800, () => pingos.destroy());
+    SOM.tocar('splort');
     this.texto(x, base - 50, s.tipo === 'chefao' ? 'GOSMÃO DERRETEU!' : 'SPLORT!', '#7dff95');
   }
 
@@ -966,7 +985,7 @@ class Fase extends Phaser.Scene {
     if (!semPisao && (s.tipo === 'comedor' || s.tipo === 'agarrador') && !s.vitima && !(s.atordoado > 0) && !j.preso) {
       this.capturar(j, s); return;
     }
-    j.vida--; j.invencivel = 1200;
+    j.vida--; j.invencivel = 1200; SOM.tocar('dano');
     j.setVelocity(j.x < s.x ? -250 : 250, -300);
     this.cameras.main.shake(100, 0.004);
     if (j.vida <= 0) this.cair(j);
@@ -978,6 +997,7 @@ class Fase extends Phaser.Scene {
     const outros = this.jogadores.filter(o => !o.caido);
     if (!outros.length) {
       this.acabou = true;
+      SOM.pararMusica(); SOM.tocar('derrota');
       this.mensagem('Os gosmentos venceram desta vez...\nAperte R ou toque na tela para tentar de novo', '#ff5d73');
       this.esperarRecomeco();
       return;
@@ -997,6 +1017,7 @@ class Fase extends Phaser.Scene {
     if (this.acabou) return;
     this.acabou = true;
     this.physics.pause();
+    SOM.pararMusica(); SOM.tocar('vitoria');
     this.mensagem('FASE CONCLUÍDA!\nAperte R ou toque na tela para jogar de novo', '#7cff6b');
     this.esperarRecomeco();
   }
