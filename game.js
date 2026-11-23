@@ -64,7 +64,50 @@ const MAPA2 = [
   '#                                                          #',
   '#                                                          #',
   '#                                                          #',
-  '#                                                          #',
+  '#   P                                                      #',
+  '################################################---------###',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#                           v H                            #',
+  '#                 -------     H     -------                #',
+  '#                             H                            #',
+  '#                   g         H     s       G       T      #',
+  '###---------##################H#############################',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#     T        s         c    H         a         S        #',
+  '################################################---------###',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#                             H v                          #',
+  '#                 -------     H     -------                #',
+  '#                             H                            #',
+  '#           m         A       H     s     g                #',
+  '###---------##################H#############################',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#                   s         H     c   M       g   T      #',
+  '################################################---------###',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#                         v   H                            #',
+  '#                 -------     H     -------                #',
+  '#                             H                            #',
+  '#       T a              s    H  G      s                  #',
+  '###---------##################H#############################',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#                             H   V                        #',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#                 m       S   H    g         c             #',
+  '################################################---------###',
   '#                                                          #',
   '#                                                          #',
   '#                                                          #',
@@ -77,65 +120,68 @@ const MAPA2 = [
   '#                                                          #',
   '#                                                          #',
   '#                                                          #',
-  '#                                                       E  #',
-  '###---------################################################',
   '#                                                          #',
   '#                                                          #',
-  '#    ---------                                             #',
-  '#                                                          #',
-  '#             s             a       C     g                #',
-  '################################################---------###',
-  '#                                                          #',
-  '#                                 V                        #',
-  '#                   -------       -------     ---------    #',
-  '#                                                          #',
-  '#       T         m       S   H    g         c             #',
-  '###---------##################H#############################',
-  '#                             H                            #',
-  '#                         v   H                            #',
-  '#    ---------                H                            #',
-  '#                             H                            #',
-  '#         a              s    H  G      s                  #',
-  '################################################---------###',
   '#                                                          #',
   '#                                                          #',
-  '#                   -------       -------     ---------    #',
   '#                                                          #',
-  '#                   s         H     c   M       g   T      #',
-  '###---------##################H#############################',
-  '#                             H                            #',
-  '#                             H v                          #',
-  '#    ---------                H                            #',
-  '#                             H                            #',
-  '#     T     m         A       s           g                #',
-  '################################################---------###',
-  '#                                                          #',
-  '#                                                          #',
-  '#                   -------       -------     ---------    #',
-  '#                                                          #',
-  '#              s         c    H         a         S        #',
-  '###---------##################H#############################',
-  '#                             H                            #',
-  '#                             H                            #',
-  '#    ---------              v H                            #',
-  '#                             H                            #',
-  '#                   g         H     s       G       T      #',
-  '################################################---------###',
-  '#                                                          #',
-  '#                                                          #',
-  '#                                             ---------    #',
-  '#   P                                                      #',
-  '#                                                          #',
+  '#                                                        E #',
   '############################################################',
+];
+
+// Prólogo na Terra (gerado por tools/mapa0.py)
+const MAPA0 = [
+  '#                                                                                                            #',
+  '#                                                                                                            #',
+  '#                                                                                                            #',
+  '#                                                                                                            #',
+  '#                                                                                                            #',
+  '#                                                                                                            #',
+  '#                                                                                                            #',
+  '#                                                                                                            #',
+  '#                                                                                                            #',
+  '#                                                                                                            #',
+  '#                                                 V                        v                                 #',
+  '#                                                                                                            #',
+  '#                                                                T                                           #',
+  '#                                                         ----H------                                        #',
+  '#                            -----                            H                     G                        #',
+  '#                                                             H               -------                        #',
+  '#                                                             H                                              #',
+  '#                          --------                     ----- H       -------                                #',
+  '#                 -------                     #####           H                               g              #',
+  '#                                          ###########        H                            #######           #',
+  '#     P                  G          g   ################# g   H                         #############    E   #',
+  '##############################################################################################################',
 ];
 
 const TIPOS = { g: 'sombra', v: 'morcego', c: 'cuspidor', m: 'comedor', a: 'agarrador', s: 'saltador' };
 
 const FASES = [
-  { nome: 'Mundo 1: Cavernas Gosmentas', mapa: MAPA, chefe: 'chefao', nomeChefe: 'GOSMÃO', musica: 'fase1',
-    fundo: '#0f2418', rochas: 0x163626, bolhas: 0x7dff95, bloco: 'bloco' },
-  { nome: 'Mundo 2: Torre da Nave-Mãe', mapa: MAPA2, chefe: 'rainha', nomeChefe: 'RAINHA GOSMA', musica: 'fase2',
-    fundo: '#16102b', rochas: 0x2a2050, bolhas: 0xc77dff, bloco: 'bloco2' },
+  { nome: 'Prólogo: Terra', mapa: MAPA0, chefe: null, musica: 'fase1', semPoderes: true, saida: 'foguete', cenaDepois: 'nave',
+    fundo: '#0b1030', rochas: 0x141e45, bolhas: 0xffffff, bloco: 'bloco0', decor: ['flor', 'tufo', 'tufo'], pingos: false,
+    dicas: [
+      { c: 9, r: 20, quem: 'anne', via: 'gritando da janela', texto: 'Meninos, cuidado! Andem com A/D (ou ◀ ▶) e pulem com W (ou ⤒)!' },
+      { c: 21, r: 20, quem: 'daniel', via: 'gritando do quintal', texto: 'Chinelo no F (🩴) e estilingue no G (🎯)! Vão atrás do Lucca!' },
+      { c: 37, r: 20, quem: 'ithalo', via: 'pelo celular', texto: 'Primo! Esses gosmentos ficaram para trás. Quando um deles se espreme, ele vai pular em vocês!' },
+      { c: 60, r: 20, quem: 'daniel', via: 'gritando do quintal', texto: 'Subam a escada da casa da árvore segurando W (ou ▲). Tem um baú lá em cima!' },
+      { c: 87, r: 20, quem: 'anne', via: 'gritando de longe', texto: 'A nave foi para o fim do pasto! Corram!' },
+    ] },
+  { nome: 'Mundo 1: Cavernas de Marte', mapa: MAPA, chefe: 'chefao', nomeChefe: 'GOSMÃO', musica: 'fase1', cenaDepois: 'centro',
+    fundo: '#0f2418', rochas: 0x163626, bolhas: 0x7dff95, bloco: 'bloco', decor: ['planta', 'planta', 'cristal', 'cogumelinho'], pingos: true,
+    dicas: [
+      { c: 7, r: 43, quem: 'anne', texto: 'Agora vocês têm poderes! Especial no H (★) e cambalhota com dois toques rápidos para o lado.' },
+      { c: 18, r: 43, quem: 'ithalo', texto: 'Abram os baús: tem armas novas! E peguem as moedas de gosma para a nossa loja.' },
+      { c: 33, r: 43, quem: 'daniel', texto: 'Se o bocão engolir vocês, apertem os botões bem rápido para escapar!' },
+      { c: 82, r: 13, quem: 'daniel', texto: 'É o Gosmão! Quando ele se espremer, deem cambalhota para escapar do tremor.' },
+    ] },
+  { nome: 'Mundo 2: Torre da Nave-Mãe', mapa: MAPA2, chefe: 'rainha', nomeChefe: 'RAINHA GOSMA', musica: 'fase2', cenaDepois: 'nucleo',
+    fundo: '#16102b', rochas: 0x2a2050, bolhas: 0xc77dff, bloco: 'bloco2', decor: ['cristal', 'cogumelinho'], pingos: true,
+    dicas: [
+      { c: 8, r: 7, quem: 'anne', texto: 'Para descer pelas tábuas de madeira, fiquem em cima delas e apertem S (ou ▼).' },
+      { c: 12, r: 21, quem: 'ithalo', texto: 'Esse sapo laranja se agacha antes de pular. Fiquem espertos!' },
+      { c: 46, r: 49, quem: 'daniel', texto: 'Lá embaixo está a Rainha Gosma! Quando ela piscar vermelho, cambalhota! Depois do rasante ela cansa: chinelo nela!' },
+    ] },
 ];
 
 // ---- personagens em pixel art (16x24, desenhado em dobro)
@@ -244,6 +290,16 @@ const DIFICULDADES = [
   { nome: 'Quero a minha mãe!',   cor: '#ff5d73', vidaJog: 4, vidaInim: 1.5, vel: 1.25, apertos: 1.4, quantidade: 'mais' },
 ];
 
+// o que vem depois de vencer uma fase: cena da história → loja dos hologramas → próxima fase
+function sequenciaDepois(nivel, cfg) {
+  const prox = nivel + 1;
+  const destinoFase = prox < FASES.length
+    ? { cena: 'Loja', dados: { depois: { cena: 'Fase', dados: Object.assign({}, cfg, { nivel: prox }) } } }
+    : { cena: 'Menu' };
+  const id = FASES[nivel].cenaDepois;
+  return id ? { cena: 'Cena', dados: { id, depois: destinoFase } } : destinoFase;
+}
+
 class Menu extends Phaser.Scene {
   constructor() { super('Menu'); }
   create() {
@@ -277,7 +333,7 @@ class Menu extends Phaser.Scene {
       op.on('pointerdown', () => { SOM.iniciar(); SOM.tocar('menu'); this.telaCheia(); aoEscolher(i); });
       this.itens.push(op);
     });
-    ['ONE', 'TWO', 'THREE'].forEach((k, i) => this.input.keyboard.once('keydown-' + k, () => { SOM.iniciar(); SOM.tocar('menu'); aoEscolher(i); }));
+    ['ONE', 'TWO', 'THREE', 'FOUR'].slice(0, textos.length).forEach((k, i) => this.input.keyboard.once('keydown-' + k, () => { SOM.iniciar(); SOM.tocar('menu'); aoEscolher(i); }));
   }
 
   passo1() {
@@ -292,11 +348,14 @@ class Menu extends Phaser.Scene {
   }
 
   passo3(jogadores, dificuldade) {
-    let liberado = 0;
-    liberado = PROGRESSO.mundo;
-    if (liberado <= 0) { this.scene.start('Fase', { jogadores, dificuldade, nivel: 0 }); return; }
-    const mundos = FASES.slice(0, liberado + 1);
-    this.opcoes('Qual mundo?', mundos.map(f => f.nome), null, i => this.scene.start('Fase', { jogadores, dificuldade, nivel: i }));
+    const comecar = nivel => {
+      const cfg = { jogadores, dificuldade, nivel };
+      if (nivel === 0) this.scene.start('Cena', { id: 'abertura', depois: { cena: 'Fase', dados: cfg } });
+      else this.scene.start('Loja', { depois: { cena: 'Fase', dados: cfg } });
+    };
+    const liberado = PROGRESSO.mundo;
+    if (liberado <= 0) { comecar(0); return; }
+    this.opcoes('Onde começar?', FASES.slice(0, liberado + 1).map(f => f.nome), null, i => comecar(i));
   }
 }
 
@@ -364,7 +423,15 @@ class Fase extends Phaser.Scene {
     const ex = pecas.find(p => p.ch === 'E');
     this.chegada = this.add.rectangle(ex.x, ex.y - 60, 20, 120, 0x7cff6b);
     this.physics.add.existing(this.chegada, true);
-    this.add.text(ex.x, ex.y - 140, 'SAÍDA', { fontFamily: 'Arial Black', fontSize: 20, color: '#7cff6b' }).setOrigin(0.5);
+    if (this.fase.saida === 'foguete') { this.chegada.setVisible(false); this.add.image(ex.x - 30, ex.y - 58, 'foguete').setDepth(-1); }
+    else if (this.fase.saida === 'lucca') {
+      this.chegada.setVisible(false);
+      const l = this.add.image(ex.x, ex.y - 50, 'lucca').setScale(1.5);
+      const b = this.add.circle(ex.x, ex.y - 50, 36, 0x6bd1ff, 0.25).setStrokeStyle(3, 0xbfeeff, 0.8);
+      this.tweens.add({ targets: [l, b], y: ex.y - 60, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
+    this.add.text(ex.x, ex.y - 140, this.fase.saida === 'foguete' ? 'NAVE ESQUECIDA' : this.fase.saida === 'lucca' ? 'LUCCA!' : 'SAÍDA',
+      { fontFamily: 'Arial Black', fontSize: 20, color: '#7cff6b', stroke: '#000', strokeThickness: 4 }).setOrigin(0.5);
 
     // baús
     this.baus = this.physics.add.staticGroup();
@@ -377,7 +444,7 @@ class Fase extends Phaser.Scene {
     this.chefao = null;
     // hologramas com dicas espalhados pela fase
     this.dicas = (this.fase.dicas || []).map(d => {
-      const h = this.add.image(d.c * T + T / 2, (d.r + 1) * T - 24, 'holo_' + d.quem).setAlpha(0.7).setDepth(-1);
+      const h = this.add.image(d.c * T + T / 2, (d.r + 1) * T - 24, 'holo_' + d.quem).setAlpha(d.via ? 0 : 0.7).setDepth(-1);
       this.tweens.add({ targets: h, alpha: 0.35, duration: 120, yoyo: true, repeat: -1, repeatDelay: Phaser.Math.Between(1200, 2400) });
       return Object.assign({ img: h, visto: false }, d);
     });
@@ -461,7 +528,7 @@ class Fase extends Phaser.Scene {
     const c = this.add.container(W / 2, 92).setScrollFactor(0).setDepth(45);
     const fundo = this.add.rectangle(0, 0, 700, 78, 0x06121f, 0.88).setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(f.cor).color);
     const rosto = this.add.image(-310, 0, 'holo_' + d.quem).setScale(1.3).setAlpha(0.9);
-    const nome = this.add.text(-270, -30, f.nome + ' (holograma):', { fontFamily: 'Arial Black', fontSize: 15, color: f.cor });
+    const nome = this.add.text(-270, -30, f.nome + ' (' + (d.via || 'holograma') + '):', { fontFamily: 'Arial Black', fontSize: 15, color: f.cor });
     const t = this.add.text(-270, -8, d.texto, { fontFamily: 'Arial', fontSize: 16, color: '#ffffff', wordWrap: { width: 600 } });
     c.add([fundo, rosto, nome, t]);
     this.painelDica = c;
@@ -470,7 +537,7 @@ class Fase extends Phaser.Scene {
   }
 
   mostrarTitulo() {
-    const t = this.add.text(W / 2, 120, this.fase.nome, { fontFamily: 'Arial Black', fontSize: 34, color: '#ffffff', stroke: '#000', strokeThickness: 6 })
+    const t = this.add.text(W / 2, 200, this.fase.nome, { fontFamily: 'Arial Black', fontSize: 34, color: '#ffffff', stroke: '#000', strokeThickness: 6 })
       .setOrigin(0.5).setScrollFactor(0).setDepth(40);
     this.tweens.add({ targets: t, alpha: 0, delay: 1800, duration: 800, onComplete: () => t.destroy() });
   }
@@ -478,16 +545,16 @@ class Fase extends Phaser.Scene {
   // plantas brilhantes, cristais e gosma pingando do teto
   decorar() {
     const M = this.mapa;
-    const vazio = (r, c) => M[r] && (M[r][c] === ' ' || 'gvcmasGVCMASTPEB'.includes(M[r][c]));
+    const vazio = (r, c) => M[r] && (M[r][c] === ' ' || 'gvcmasGVCMASTPEBH-'.includes(M[r][c]));
     M.forEach((linha, r) => [...linha].forEach((ch, c) => {
       if (ch !== '#') return;
       const x = c * T + T / 2;
       if (r > 0 && vazio(r - 1, c) && Math.random() < 0.22) {
-        const tipo = Phaser.Utils.Array.GetRandom(['planta', 'planta', 'cristal', 'cogumelinho']);
+        const tipo = Phaser.Utils.Array.GetRandom(this.fase.decor);
         const d = this.add.image(x + Phaser.Math.Between(-8, 8), r * T + 2, tipo).setOrigin(0.5, 1).setDepth(-1).setFlipX(Math.random() < 0.5);
-        if (tipo !== 'cogumelinho') this.tweens.add({ targets: d, alpha: 0.55, duration: Phaser.Math.Between(900, 1600), yoyo: true, repeat: -1 });
+        if (tipo === 'planta' || tipo === 'cristal') this.tweens.add({ targets: d, alpha: 0.55, duration: Phaser.Math.Between(900, 1600), yoyo: true, repeat: -1 });
       }
-      if (vazio(r + 1, c) && r > 0 && Math.random() < 0.1) {
+      if (this.fase.pingos && vazio(r + 1, c) && r > 0 && Math.random() < 0.1) {
         const e = this.add.image(x, (r + 1) * T, 'estalactite').setOrigin(0.5, 0).setDepth(-1);
         if (Math.random() < 0.4) this.time.addEvent({ delay: Phaser.Math.Between(1800, 4000), loop: true, callback: () => {
           if (!this.cameras.main.worldView.contains(x, e.y)) return;
@@ -545,6 +612,7 @@ class Fase extends Phaser.Scene {
   }
 
   criarTexturas() {
+    gerarTexturasHistoria(this);
     if (this.textures.exists('bloco')) return;
     const g = this.add.graphics();
     g.fillStyle(0x24453a).fillRect(0, 0, 32, 32).fillStyle(0x3d7a5a).fillRect(0, 0, 32, 6).fillStyle(0x1b3329).fillRect(6, 14, 8, 6).fillRect(20, 22, 7, 5);
@@ -552,6 +620,13 @@ class Fase extends Phaser.Scene {
     g.fillStyle(0x3a3a5a).fillRect(0, 0, 32, 32).fillStyle(0x5a5a8a).fillRect(0, 0, 32, 4).fillStyle(0x26263d).fillRect(0, 30, 32, 2)
      .fillStyle(0x8a8ac0).fillCircle(5, 9, 1.5).fillCircle(27, 9, 1.5).fillCircle(5, 25, 1.5).fillCircle(27, 25, 1.5).fillStyle(0xc77dff).fillRect(12, 15, 8, 2);
     g.generateTexture('bloco2', 32, 32).clear();
+    g.fillStyle(0x5a3a1e).fillRect(0, 0, 32, 32).fillStyle(0x3fa83f).fillRect(0, 0, 32, 7).fillStyle(0x2f7a2f).fillRect(0, 7, 32, 2)
+     .fillStyle(0x4a2e16).fillRect(6, 16, 5, 4).fillRect(20, 24, 6, 3);
+    g.generateTexture('bloco0', 32, 32).clear();
+    g.fillStyle(0x2f7a2f).fillRect(7, 6, 2, 10).fillStyle(0xffe14d).fillCircle(8, 5, 2).fillStyle(0xff9be8).fillCircle(5, 4, 2.5).fillCircle(11, 4, 2.5).fillCircle(8, 1.5, 2.5).fillCircle(8, 7, 2.5).fillStyle(0xffe14d).fillCircle(8, 4.5, 2);
+    g.generateTexture('flor', 16, 16).clear();
+    g.fillStyle(0x3fa83f).fillTriangle(0, 12, 3, 0, 6, 12).fillTriangle(5, 12, 9, 2, 12, 12).fillTriangle(10, 12, 14, 4, 16, 12);
+    g.generateTexture('tufo', 16, 12).clear();
     g.fillStyle(0x6b5a3a).fillRect(0, 0, 32, 12).fillStyle(0x8a7550).fillRect(0, 0, 32, 4).fillStyle(0x4a3d26).fillRect(15, 0, 2, 12);
     g.generateTexture('ponte', 32, 12).clear();
     g.fillStyle(0xa8823f).fillRect(4, 0, 4, 32).fillRect(24, 0, 4, 32).fillRect(4, 6, 24, 4).fillRect(4, 22, 24, 4);
@@ -1327,6 +1402,7 @@ SOM.tocar('cuspe');
   }
 
   vitoria() {
+    this.indo = false;
     if (this.acabou) return;
     this.acabou = true;
     this.physics.pause();
@@ -1334,15 +1410,12 @@ SOM.tocar('cuspe');
     const cfg = this.registry.get('config');
     const proximo = this.nivel + 1;
     PROGRESSO.liberar(Math.min(proximo, FASES.length - 1));
-    if (proximo < FASES.length) {
-      this.mensagem(this.fase.nome.split(':')[0].toUpperCase() + ' COMPLETO!\nAperte R ou toque na tela para ir ao ' + FASES[proximo].nome.split(':')[0], '#7cff6b');
-      cfg.nivel = proximo; this.registry.set('config', cfg);
-      this.esperarRecomeco();
-    } else {
-      this.mensagem('VOCÊS VENCERAM OS GOSMENTOS!\nNícolas e Theo salvaram o Coração de Marte!\nToque ou aperte R para voltar ao menu', '#ffe14d');
-      this.input.keyboard.once('keydown-R', () => this.scene.start('Menu'));
-      this.time.delayedCall(800, () => this.input.once('pointerdown', () => this.scene.start('Menu')));
-    }
+    const destino = sequenciaDepois(this.nivel, cfg);
+    const titulo = this.fase.nome.split(':')[0].toUpperCase();
+    this.mensagem(proximo < FASES.length ? `${titulo} COMPLETO!\n🪙 +${this.moedasFase} moedas de gosma\nToque ou aperte R para continuar` : 'VOCÊS RESGATARAM O LUCCA!\nToque ou aperte R para continuar', '#7cff6b');
+    const ir = () => { if (this.indo) return; this.indo = true; this.scene.start(destino.cena, destino.dados); };
+    this.input.keyboard.once('keydown-R', ir);
+    this.time.delayedCall(800, () => this.input.once('pointerdown', ir));
   }
 
   esperarRecomeco() {

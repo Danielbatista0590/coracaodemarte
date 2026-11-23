@@ -129,7 +129,7 @@ const CENAS = {
 
 class Cena extends Phaser.Scene {
   constructor() { super('Cena'); }
-  init(data) { this.roteiro = CENAS[data.id] || []; this.depois = data.depois; this.i = -1; }
+  init(data) { this.roteiro = CENAS[data.id] || []; this.depois = data.depois; this.i = -1; this.saindo = false; this.digitando = null; }
 
   create() {
     Fase.prototype.criarTexturas.call(this);

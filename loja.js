@@ -16,7 +16,7 @@ const FALAS_LOJA = {
 
 class Loja extends Phaser.Scene {
   constructor() { super('Loja'); }
-  init(data) { this.depois = data.depois; }
+  init(data) { this.depois = data.depois; this.saindo = false; }
 
   create() {
     Fase.prototype.criarTexturas.call(this);
