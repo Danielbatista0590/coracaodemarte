@@ -25,7 +25,10 @@ const PALETA_LUCCA = { h: 0xc9933f, H: 0xe8bd6a, s: 0xf2cfae, d: 0xd9b090, e: 0x
 
 // ---- hologramas: mesmo desenho dos meninos, em azul, com um detalhe de cada um
 const FAMILIA = {
-  daniel: { nome: 'Papai Daniel', cor: '#6be4ff', detalhe: 'barba' },
+  // Daniel: cabelo escuro curto, barba e bigode, blazer azul-marinho sobre camiseta clara, flor na lapela
+  daniel: { nome: 'Papai Daniel', cor: '#6be4ff', detalhe: 'daniel',
+    pal: { h: 0x2a1d14, b: 0x3a2a1e, s: 0xd9a477, d: 0xc08a60, e: 0x1a1a1a, m: 0xb0504a, w: 0xd8d8dc, W: 0xbcbcc4,
+           z: 0x2c3a52, Z: 0x1f2a3d, f: 0xf2e6d8, j: 0x2c3a52, J: 0x1f2a3d, k: 0x2a1d14, o: 0x2a1d14 } },
   // Anne: cabelo na altura dos ombros com luzes, blusa florida e colar
   anne:   { nome: 'Mamãe Anne',   cor: '#ff9be8', detalhe: 'anne',
     pal: { h: 0x8a6038, H: 0xd9b47a, s: 0xe8c09a, d: 0xcfa27c, e: 0x2a1d14, m: 0xc0605a, w: 0xf2e8d2, W: 0xd9ccb0,
@@ -44,7 +47,15 @@ function gerarTexturasHistoria(cena) {
   // hologramas
   Object.entries(FAMILIA).forEach(([id, f]) => {
     const linhas = [...PIXEL_CORPO, ...PIXEL_PERNAS.parado].map(l => [...l]);
-    if (f.detalhe === 'barba') { [5, 6, 7].forEach(y => { linhas[y][4] = 'h'; linhas[y][11] = 'h'; }); linhas[7][6] = linhas[7][7] = linhas[7][8] = linhas[7][9] = 'h'; }
+    if (f.detalhe === 'daniel') {
+      [5, 6].forEach(y => { linhas[y][4] = 'b'; linhas[y][11] = 'b'; });
+      for (let x = 5; x <= 10; x++) linhas[7][x] = 'b';                        // barba
+      linhas[6][7] = 'b'; linhas[6][10] = 'b';                                  // bigode
+      for (let y = 9; y <= 15; y++) for (let x = 0; x < 16; x++) {              // blazer por cima da camiseta
+        if ((linhas[y][x] === 'w' || linhas[y][x] === 'W') && (x < 6 || x > 9)) linhas[y][x] = linhas[y][x] === 'W' ? 'Z' : 'z';
+      }
+      linhas[11][10] = 'f'; linhas[10][10] = 'f';                               // flor na lapela
+    }
     if (f.detalhe === 'anne') {
       for (let y = 1; y < 11; y++) { linhas[y][2] = y % 2 ? 'H' : 'h'; linhas[y][3] = 'h'; linhas[y][12] = 'h'; linhas[y][13] = y % 2 ? 'h' : 'H'; }
       [[5, 1], [7, 1], [9, 2]].forEach(([x, y]) => { linhas[y][x] = 'H'; });
