@@ -1,25 +1,27 @@
 // História: cenas em quadros (estilo Heart of Darkness), Lucca e os hologramas da família.
 
-// ---- Lucca (bebê) em pixel art 12x16
+// ---- Lucca (2 anos): cabelo cacheado dourado, camiseta cinza-escura e o copinho de amoras
 const PIXEL_LUCCA = [
-  '....hhhh....',
-  '...hhhhhh...',
-  '..hssssssh..',
-  '..sssssss s.',
-  '..sseessess.',
-  '..ssssssss..',
-  '..sssmmsss..',
-  '...ssssss...',
-  '....yyyy....',
-  '..yyyyyyyy..',
-  '.syyyyyyyys.',
-  '.s.yyyyyy.s.',
-  '...yyyyyy...',
-  '...ffffff...',
-  '...ss..ss...',
-  '...ss..ss...',
-].map(l => l.replace(' ', 's'));
-const PALETA_LUCCA = { h: 0x8a5a2b, s: 0xd9a477, e: 0x1a1a1a, m: 0xb0504a, y: 0xffe14d, f: 0xffffff };
+  '...HhHhHh.....',
+  '..hHhhhhHh....',
+  '.hhHhhhhhHh...',
+  '.hHhssssshHh..',
+  '.hhssssssshh..',
+  '.hhsesssessh..',
+  '.hhssssssssh..',
+  '..hsssmmsssh..',
+  '...ssssssss...',
+  '....dsssd.....',
+  '..yyyyyyyyy...',
+  '.yyyyyyyyyyy..',
+  'syyyyyyyyyyycc',
+  'syyYYyyyyyysac',
+  '.yyyyyyyyyy.cc',
+  '..YYYYYYYYY...',
+  '...ss...ss....',
+  '...kk...kk....',
+];
+const PALETA_LUCCA = { h: 0xc9933f, H: 0xe8bd6a, s: 0xf2cfae, d: 0xd9b090, e: 0x2a1d14, m: 0xc0605a, y: 0x3d4148, Y: 0x2a2d33, c: 0xe6f0f5, a: 0x4a1238, k: 0x6b6b6b };
 
 // ---- hologramas: mesmo desenho dos meninos, em azul, com um detalhe de cada um
 const FAMILIA = {
@@ -34,7 +36,7 @@ function gerarTexturasHistoria(cena) {
   const pintar = (linhas, pal, esc = 2) => linhas.forEach((l, y) => [...l].forEach((ch, x) => {
     if (pal[ch] !== undefined) g.fillStyle(pal[ch]).fillRect(x * esc, y * esc, esc, esc);
   }));
-  pintar(PIXEL_LUCCA, PALETA_LUCCA); g.generateTexture('lucca', 24, 32).clear();
+  pintar(PIXEL_LUCCA, PALETA_LUCCA); g.generateTexture('lucca', 28, 36).clear();
 
   // hologramas
   Object.entries(FAMILIA).forEach(([id, f]) => {
@@ -82,9 +84,9 @@ function gerarTexturasHistoria(cena) {
 // cada quadro: fundo, montar(cena) para posicionar figuras, e o texto
 const CENAS = {
   abertura: [
-    { fundo: '#0b1030', montar: c => { c.ceu(); c.img('casa', 250, 330); c.img('theo', 520, 380, 2); c.img('nicolas', 590, 380, 2); c.img('lucca', 660, 395, 2); c.chao(0x2f6b2a); },
+    { fundo: '#0b1030', montar: c => { c.ceu(); c.img('casa', 250, 330); c.img('theo', 520, 380, 2); c.img('nicolas', 590, 380, 2); c.img('lucca', 660, 388, 2); c.chao(0x2f6b2a); },
       texto: 'Theo, Nícolas e o pequeno Lucca são três irmãos que moram na Terra.' },
-    { fundo: '#0b1030', montar: c => { c.ceu(); c.img('casa', 250, 330); c.flutuar(c.img('disco', 620, 110, 1.5)); c.img('theo', 520, 380, 2); c.img('nicolas', 590, 380, 2); c.img('lucca', 660, 395, 2); c.chao(0x2f6b2a); },
+    { fundo: '#0b1030', montar: c => { c.ceu(); c.img('casa', 250, 330); c.flutuar(c.img('disco', 620, 110, 1.5)); c.img('theo', 520, 380, 2); c.img('nicolas', 590, 380, 2); c.img('lucca', 660, 388, 2); c.chao(0x2f6b2a); },
       texto: 'Um dia, alienígenas gosmentos vieram à Terra para sequestrar mentes brilhantes e roubar o conhecimento delas.' },
     { fundo: '#0b1030', montar: c => { c.ceu(); c.feixe(660, 140, 400); c.flutuar(c.img('disco', 660, 110, 1.5)); c.img('theo', 520, 380, 2); c.img('nicolas', 590, 380, 2); c.flutuar(c.img('lucca', 660, 330, 2)); c.chao(0x2f6b2a); },
       texto: 'E descobriram que no cérebro do Lucca está a resposta para a vida, o universo e tudo mais... mesmo ele ainda nem sabendo falar!' },
@@ -111,17 +113,17 @@ const CENAS = {
   nucleo: [
     { fundo: '#14081f', montar: c => { for (let i = 0; i < 8; i++) c.flutuar(c.img(Phaser.Utils.Array.GetRandom(['sombra', 'comedor', 'agarrador', 'saltador']), 120 + i * 100, 360 + (i % 2) * 30, 1.5), i * 150); },
       texto: 'No centro de Marte vive uma civilização maluca de gosmentos. Eles estão quase sendo extintos!' },
-    { fundo: '#14081f', montar: c => { c.flutuar(c.img('cerebro', 480, 200, 3)); c.img('lucca', 480, 400, 2); c.bolha(480, 400); },
+    { fundo: '#14081f', montar: c => { c.flutuar(c.img('cerebro', 480, 200, 3)); c.img('lucca', 480, 380, 2); c.bolha(480, 380); },
       texto: 'Por isso sequestram os seres mais inteligentes da galáxia. O Grande Cérebro Gosma acha que só o Lucca pode salvar o povo dele... e não quer devolver!' },
   ],
   final: [
-    { fundo: '#14081f', montar: c => { c.img('cerebro', 480, 170, 2.5).setAlpha(0.9); c.img('theo', 380, 400, 2); c.img('nicolas', 580, 400, 2); c.img('lucca', 480, 410, 2); c.balao('Qual é a resposta para salvar nosso povo?', 480, 280); },
+    { fundo: '#14081f', montar: c => { c.img('cerebro', 480, 170, 2.5).setAlpha(0.9); c.img('theo', 380, 400, 2); c.img('nicolas', 580, 400, 2); c.img('lucca', 480, 388, 2); c.balao('Qual é a resposta para salvar nosso povo?', 480, 280); },
       texto: 'O Grande Cérebro, derrotado, perguntou ao Lucca: "Por favor... qual é a resposta para salvar nosso povo?"' },
-    { fundo: '#14081f', montar: c => { c.img('lucca', 480, 400, 3); const a = c.img('bloquinho4', 400, 300, 1.5), b = c.img('bloquinho2', 560, 300, 1.5); [a, b].forEach((o, i) => { o.setAlpha(0); c.tweens.add({ targets: o, alpha: 1, y: 330, delay: 600 + i * 700, duration: 400 }); }); c.legenda('4', 400, 330, '#ffffff', 40); c.legenda('2', 560, 330, '#ffffff', 40); },
+    { fundo: '#14081f', montar: c => { c.img('lucca', 480, 368, 3); const a = c.img('bloquinho4', 400, 300, 1.5), b = c.img('bloquinho2', 560, 300, 1.5); [a, b].forEach((o, i) => { o.setAlpha(0); c.tweens.add({ targets: o, alpha: 1, y: 330, delay: 600 + i * 700, duration: 400 }); }); c.legenda('4', 400, 330, '#ffffff', 40); c.legenda('2', 560, 330, '#ffffff', 40); },
       texto: 'Lucca pegou seus bloquinhos de brinquedo e montou, com toda a calma do mundo... 42.' },
     { fundo: '#14081f', montar: c => { for (let i = 0; i < 7; i++) c.flutuar(c.img(Phaser.Utils.Array.GetRandom(['sombra', 'comedor', 'saltador']), 120 + i * 120, 360, 1.5), i * 100); c.img('cerebro', 480, 160, 2); c.balao('É ISSO!!!', 480, 260); c.legenda('Hã?', 200, 470, '#ffef5d'); c.legenda('Não entendi nada.', 760, 470, '#ffef5d'); },
       texto: '"É ISSO!!!" Os gosmentos choraram de alegria: a civilização deles estava salva! Theo e Nícolas se olharam... e não entenderam nada.' },
-    { fundo: '#0b1030', montar: c => { c.ceu(); c.img('casa', 250, 330); c.img('theo', 470, 380, 2); c.img('nicolas', 530, 380, 2); c.img('lucca', 500, 395, 2);
+    { fundo: '#0b1030', montar: c => { c.ceu(); c.img('casa', 250, 330); c.img('theo', 470, 380, 2); c.img('nicolas', 530, 380, 2); c.img('lucca', 500, 388, 2);
         ['daniel', 'anne', 'ithalo'].forEach((id, i) => c.img('holo_' + id, 650 + i * 60, 380, 2).clearTint()); c.chao(0x2f6b2a); c.legenda('FIM', 480, 80, '#ffe14d', 48); },
       texto: 'Os gêmeos pegaram o Lucca de volta e voaram para casa, onde papai, mamãe e o primo Ithalo esperavam por eles. Obrigado por jogar!' },
   ],
