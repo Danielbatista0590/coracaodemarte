@@ -132,6 +132,20 @@ for q in range(2):
     fr.append(txt(g))
 R['rainha'] = {'pal': {'g': 0xc77dff, 'G': 0x9a4fd6, 'o': 0x3a1260, 'c': 0xffd23f, 'r': 0xff3b6b, 'w': 0xffffff, 'k': 0x111111, 'y': 0xfff36b, 'm': 0x3a1260, 'l': 0xf0d9ff}, 'frames': fr}
 
+# Grande Cérebro Gosma (chefe final): cérebro gigante numa cúpula, sobre um disco
+fr = []
+for q in range(2):
+    g = grade(40, 34)
+    elipse(g, 20, 13, 17, 13, 'v', so_cima=False)          # cúpula de vidro
+    elipse(g, 20, 14, 14, 10, 'b')                          # cérebro
+    for (x1, y1, x2) in [(9, 9, 15), (22, 7, 30), (11, 15, 19), (23, 13, 31), (15, 20, 25)]:
+        for x in range(x1, x2): px(g, x, y1 + (x % 3 == 0), 'B')
+    olho(g, 13, 14 + q, grande=True); olho(g, 25, 14 + q, grande=True)
+    ret(g, 2, 25, 37, 28, 'm'); ret(g, 6, 29, 33, 30, 'M')
+    for x in (6, 13, 20, 27, 34): px(g, x, 26, 'y' if (x // 7 + q) % 2 else 'w')
+    fr.append(txt(contorno(g)))
+R['cerebro'] = {'pal': {'v': 0x9fe8ff, 'b': 0xff8fb8, 'B': 0xd9577f, 'o': 0x2a1030, 'm': 0x8892a0, 'M': 0x5a6270, 'w': 0xffffff, 'k': 0x111111, 'y': 0xfff36b}, 'frames': fr}
+
 print('// pixel art dos alienígenas (gerado por tools/inimigos.py). "." = transparente')
 print('const INIMIGOS_PIXEL = {')
 for k, v in R.items():
