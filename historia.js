@@ -171,14 +171,15 @@ class Cena extends Phaser.Scene {
     this.camada = this.add.container(0, 0);
     this.caixa = this.add.rectangle(W / 2, H - 62, W - 40, 104, 0x000000, 0.75).setStrokeStyle(2, 0xffffff, 0.5).setDepth(10);
     this.txt = this.add.text(40, H - 104, '', { fontFamily: 'Arial', fontSize: 21, color: '#ffffff', wordWrap: { width: W - 80 }, lineSpacing: 4 }).setDepth(11);
-    this.dica = this.add.text(W - 30, H - 22, '▶ toque / espaço', { fontFamily: 'Arial', fontSize: 13, color: '#aaaaaa' }).setOrigin(1, 0.5).setDepth(11);
-    const pular = this.add.text(W - 16, 14, 'Pular ⏭', { fontFamily: 'Arial Black', fontSize: 18, color: '#ffffff', backgroundColor: '#00000088', padding: { x: 10, y: 6 } })
+    this.dica = this.add.text(W - 30, H - 22, '▶ toque / espaço / A', { fontFamily: 'Arial', fontSize: 13, color: '#aaaaaa' }).setOrigin(1, 0.5).setDepth(11);
+    const pular = this.add.text(W - 16, 14, 'Pular ⏭ (Start)', { fontFamily: 'Arial Black', fontSize: 18, color: '#ffffff', backgroundColor: '#00000088', padding: { x: 10, y: 6 } })
       .setOrigin(1, 0).setDepth(12).setInteractive({ useHandCursor: true });
     pular.on('pointerdown', (p, x, y, ev) => { ev.stopPropagation(); this.terminar(); });
     this.input.on('pointerdown', () => this.avancar());
     this.input.keyboard.on('keydown-SPACE', () => this.avancar());
     this.input.keyboard.on('keydown-ENTER', () => this.avancar());
     this.input.keyboard.on('keydown-ESC', () => this.terminar());
+    ouvirControle(this, b => { if (b === BOTAO.START) this.terminar(); else if (b === BOTAO.A || b === BOTAO.B) this.avancar(); });
     this.avancar();
   }
 

@@ -47,6 +47,15 @@ class Loja extends Phaser.Scene {
     seguir.on('pointerdown', () => this.sair());
     this.input.keyboard.on('keydown-ENTER', () => this.sair());
     this.input.keyboard.on('keydown', e => { const n = parseInt(e.key, 10); if (n >= 1 && n <= LOJA.length) this.comprar(n - 1); });
+    this.sel = 0;
+    ouvirControle(this, b => {
+      if (b === BOTAO.CIMA) this.sel = (this.sel + LOJA.length - 1) % LOJA.length;
+      if (b === BOTAO.BAIXO) this.sel = (this.sel + 1) % LOJA.length;
+      if (b === BOTAO.A) this.comprar(this.sel);
+      if (b === BOTAO.START || b === BOTAO.B) this.sair();
+      this.atualizar();
+    });
+    this.add.text(W / 2, H - 50, '🎮 setas: escolher · A: comprar · Start: continuar', { fontFamily: 'Arial', fontSize: 13, color: '#6b8aa0' }).setOrigin(0.5);
     this.atualizar();
   }
 
@@ -59,7 +68,8 @@ class Loja extends Phaser.Scene {
       const preco = comprado ? (it.arma ? (usando ? 'EQUIPADA' : 'toque p/ usar') : 'MÁXIMO') : `🪙 ${it.precos[nv]}`;
       const nivelTxt = max > 1 ? ` [${'■'.repeat(nv)}${'□'.repeat(max - nv)}]` : '';
       this.linhas[i].setText(`${i + 1}. ${it.nome}${nivelTxt} — ${it.desc}   →   ${preco}`)
-        .setColor(comprado ? '#9dff4a' : PROGRESSO.moedas >= it.precos[nv] ? '#ffffff' : '#7a8aa0');
+        .setColor(comprado ? '#9dff4a' : PROGRESSO.moedas >= it.precos[nv] ? '#ffffff' : '#7a8aa0')
+        .setBackgroundColor(i === this.sel ? '#3a5a8a' : '#1b2a40');
     });
   }
 

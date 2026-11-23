@@ -336,6 +336,25 @@ const DIFICULDADES = [
   { nome: 'Quero a minha mãe!',   cor: '#ff5d73', vidaJog: 4, vidaInim: 1.5, vel: 1.25, apertos: 1.4, quantidade: 'mais' },
 ];
 
+// ---- controle de videogame (Xbox e parecidos): botões no padrão do navegador
+const BOTAO = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, VIEW: 8, START: 9, CIMA: 12, BAIXO: 13, ESQ: 14, DIR: 15 };
+function controles(cena) {
+  const gp = cena.input.gamepad;
+  return gp ? gp.gamepads.filter(p => p && p.connected) : [];
+}
+// chama fn(indiceDoBotao, pad) quando qualquer controle aperta um botão; o analógico vira setas no menu
+function ouvirControle(cena, fn) {
+  if (!cena.input.gamepad) return;
+  cena.input.gamepad.on('down', (pad, botao) => { SOM.iniciar(); fn(botao.index, pad); });
+  let antes = 0;
+  cena.events.on('update', () => {
+    const p = controles(cena)[0]; if (!p) return;
+    const y = p.leftStick.y, dir = y < -0.6 ? -1 : y > 0.6 ? 1 : 0;
+    if (dir && dir !== antes) fn(dir < 0 ? BOTAO.CIMA : BOTAO.BAIXO, p);
+    antes = dir;
+  });
+}
+
 // o que vem depois de vencer uma fase: cena da história → loja dos hologramas → próxima fase
 function sequenciaDepois(nivel, cfg) {
   const prox = nivel + 1;
@@ -356,7 +375,18 @@ class Menu extends Phaser.Scene {
     Fase.prototype.criarTexturas.call(this); // gera as texturas uma vez (usadas também nas cenas)
     SOM.pararMusica();
     this.itens = [];
+    ouvirControle(this, b => {
+      if (!this.botoesMenu) return;
+      if (b === BOTAO.CIMA) { this.sel = (this.sel + this.botoesMenu.length - 1) % this.botoesMenu.length; SOM.tocar('menu'); this.marcarMenu(); }
+      if (b === BOTAO.BAIXO) { this.sel = (this.sel + 1) % this.botoesMenu.length; SOM.tocar('menu'); this.marcarMenu(); }
+      if (b === BOTAO.A || b === BOTAO.START) { const f = this.escolherMenu, i = this.sel; this.botoesMenu = null; SOM.tocar('menu'); f(i); }
+    });
+    this.dicaControle = this.add.text(W / 2, 520, '🎮 Controle: setas/analógico para escolher, A para confirmar', { fontFamily: 'Arial', fontSize: 13, color: '#7a73a9' }).setOrigin(0.5);
     this.passo1();
+  }
+
+  marcarMenu() {
+    (this.botoesMenu || []).forEach((b, i) => b.setBackgroundColor(i === this.sel ? '#6b4fd1' : '#2b2350').setScale(i === this.sel ? 1.06 : 1));
   }
 
   telaCheia() {
@@ -379,6 +409,9 @@ class Menu extends Phaser.Scene {
       op.on('pointerdown', () => { SOM.iniciar(); SOM.tocar('menu'); this.telaCheia(); aoEscolher(i); });
       this.itens.push(op);
     });
+    // seleção pelo controle: setas/analógico + A
+    this.botoesMenu = this.itens.slice(1); this.sel = 0; this.escolherMenu = aoEscolher;
+    this.marcarMenu();
     ['ONE', 'TWO', 'THREE', 'FOUR'].slice(0, textos.length).forEach((k, i) => this.input.keyboard.once('keydown-' + k, () => { SOM.iniciar(); SOM.tocar('menu'); aoEscolher(i); }));
   }
 
@@ -567,6 +600,11 @@ class Fase extends Phaser.Scene {
     this.hud = this.add.text(16, 12, '', { fontFamily: 'Arial', fontSize: 20, color: '#ffffff' }).setScrollFactor(0).setDepth(10);
     this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
     this.criarControlesToque();
+    this.continuar = null;
+    ouvirControle(this, b => {
+      if (this.acabou && this.continuar && (b === BOTAO.A || b === BOTAO.START)) { const f = this.continuar; this.continuar = null; f(); }
+      if (b === BOTAO.VIEW) this.scene.start('Menu');
+    });
   }
 
   // botões na tela para celular/tablet (controlam o Jogador 1)
@@ -1044,9 +1082,14 @@ SOM.tocar('cuspe');
   }
 
 
+  // qual controle cada jogador usa: com 2 jogadores e só 1 controle, o controle fica com o jogador 2
+  // (o jogador 1 usa o teclado ou a tela); com 2 controles, um para cada
   pad(j) {
-    const p = this.input.gamepad && this.input.gamepad.getPad(j.idx);
-    return p || null;
+    const pads = controles(this);
+    if (!pads.length) return null;
+    if (this.jogadores.length === 1) return pads[0];
+    if (pads.length === 1) return j.idx === 1 ? pads[0] : null;
+    return pads[j.idx] || null;
   }
 
   update(time, delta) {
@@ -1540,10 +1583,11 @@ SOM.tocar('cuspe');
     this.mensagem(proximo < FASES.length ? `${titulo} COMPLETO!\n🪙 +${this.moedasFase} moedas de gosma\nToque ou aperte R para continuar` : 'VOCÊS RESGATARAM O LUCCA!\nToque ou aperte R para continuar', '#7cff6b');
     const ir = () => { if (this.indo) return; this.indo = true; this.scene.start(destino.cena, destino.dados); };
     this.input.keyboard.once('keydown-R', ir);
-    this.time.delayedCall(800, () => this.input.once('pointerdown', ir));
+    this.time.delayedCall(800, () => { this.input.once('pointerdown', ir); this.continuar = ir; });
   }
 
   esperarRecomeco() {
+    this.time.delayedCall(800, () => { this.continuar = () => this.scene.restart(); });
     this.input.keyboard.once('keydown-R', () => this.scene.restart());
     this.time.delayedCall(800, () => this.input.once('pointerdown', () => this.scene.restart()));
   }

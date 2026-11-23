@@ -15,7 +15,9 @@ Jogo de ação e plataforma (inspirado em Dead Cells e Heart of Darkness) com N�
 | Especial | H | J |
 
 Nícolas tem pulo duplo. Especiais: **Nícolas** joga uma casca de banana, e os alienígenas que pisam nela escorregam para longe e ficam tontos. **Theo** solta um MEGA PUM, e os alienígenas em volta desmaiam por alguns segundos.
-Também funciona com controle: A pula, X dá chinelada, Y atira com o estilingue e B usa o especial.
+**Controle de Xbox (ou parecido):** analógico/setas andam e sobem escadas · A pula · X chinelo · Y arma · B especial · LB/RB cambalhota · Start confirma/pula cena · View volta ao menu.
+Com 2 jogadores e 1 controle, o controle fica com o jogador 2 (Theo) e o jogador 1 usa o teclado. Com 2 controles, cada um usa o seu.
+Dica: se o controle não responder, aperte qualquer botão dele com a página aberta (o navegador só "acorda" o controle depois disso).
 
 O mapa é desenhado em texto no `game.js` (constante `MAPA`), gerado por `tools/mapa.py`. Legenda: `#` bloco, `-` plataforma atravessável, `H` escada, `P` início, `E` saída, `B` chefe, `g v c m a` inimigos (maiúsculas só no "Quero a minha mãe!").
 
