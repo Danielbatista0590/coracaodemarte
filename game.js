@@ -102,9 +102,9 @@ const CHARS = {
   // Nick: camiseta clara, calça jeans, tênis escuro de sola branca
   nicolas: { nome: 'Nícolas', habilidade: 'Casca de banana',
     paleta: { h: 0x2b1d14, s: 0xc58c5c, d: 0xa8714a, e: 0x1a1a1a, m: 0x7a3b2a, w: 0xe9e9ee, W: 0xc4c4cf, j: 0x7fa6cf, J: 0x5f86b0, k: 0x2a2a2a, o: 0xf2f2f2 } },
-  // Theo: provisório até chegar a foto dele
+  // Theo: cabelo bem curtinho, camiseta bege, calça preta, tênis preto de sola branca
   theo:    { nome: 'Theo', habilidade: 'Mega pum',
-    paleta: { h: 0x5a3a1e, s: 0xe8b98c, d: 0xc99a6e, e: 0x1a1a1a, m: 0x8a3b2a, w: 0xff9f1c, W: 0xd97f0c, j: 0x3b4a6b, J: 0x2b3650, k: 0xc0392b, o: 0xf2f2f2 } },
+    paleta: { h: 0x2e2118, s: 0xc9956a, d: 0xad7b52, e: 0x1a1a1a, m: 0x7a3b2a, w: 0xcbb89a, W: 0xa8957a, j: 0x1e1e22, J: 0x34343a, k: 0x151518, o: 0xf2f2f2 } },
 };
 
 const CONTROLES = [
