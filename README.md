@@ -23,5 +23,8 @@ O mapa é desenhado em texto no `game.js` (constante `MAPA`), gerado por `tools/
 
 **Som:** efeitos e música são gerados por código (`som.js`). Tecla **M** ou o botão 🔊 liga/desliga.
 
-**Mundos:** Mundo 1 (Cavernas Gosmentas, chefe Gosmão) e Mundo 2 (Torre da Nave-Mãe, subida vertical com o novo saltador e a chefe Rainha Gosma). Ao vencer um mundo, o próximo fica liberado no menu.
-Mapas: `tools/mapa.py` e `tools/mapa2.py`. Pixel art dos alienígenas: `tools/inimigos.py`.
+**História:** Theo, Nícolas e o caçula Lucca moram na Terra. Alienígenas gosmentos abduzem o Lucca, porque no cérebro dele está a resposta para a vida, o universo e tudo mais. Os gêmeos acham uma nave esquecida, bebem uma substância que dá superpoderes e vão até Marte resgatar o irmão. Papai Daniel, mamãe Anne e o primo Ithalo ajudam como hologramas: dão dicas nas fases e vendem melhorias na loja.
+
+**Fases:** Prólogo na Terra (sem poderes) → Mundo 1: Cavernas de Marte (Gosmão) → Mundo 2: Torre da Nave-Mãe, descendo (Rainha Gosma) → Mundo 3: Núcleo de Marte (Grande Cérebro) → final.
+Entre as fases há cenas da história (`historia.js`) e a loja dos hologramas (`loja.js`). Moedas e melhorias ficam salvas no navegador (`progresso.js`).
+Mapas: `tools/mapa0.py`, `tools/mapa.py`, `tools/mapa2.py`, `tools/mapa3.py`. Pixel art dos alienígenas: `tools/inimigos.py`.

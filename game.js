@@ -129,6 +129,46 @@ const MAPA2 = [
   '############################################################',
 ];
 
+// Núcleo de Marte (gerado por tools/mapa3.py)
+const MAPA3 = [
+  '################################################################################',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                  #                                           #',
+  '#                                                                              #',
+  '#                                                                              #',
+  '#                                                                              #',
+  '#                                                        B                     #',
+  '#           c                 Sv                                               #',
+  '#       -------             ------                                             #',
+  '#                                                    --------                  #',
+  '#                                                                              #',
+  '# -----               --H---                                                   #',
+  '#                  s    H                                                      #',
+  '#               ######  H               -------                     -------    #',
+  '#        T -----######  H                                                      #',
+  '#     #####     ######  H    m                                                 #',
+  '#     #####     ######  H #####                                                #',
+  '#  P  ##### g G ###### aH #####  A                                           E #',
+  '################################################################################',
+];
+
 // Prólogo na Terra (gerado por tools/mapa0.py)
 const MAPA0 = [
   '#                                                                                                            #',
@@ -181,6 +221,12 @@ const FASES = [
       { c: 8, r: 7, quem: 'anne', texto: 'Para descer pelas tábuas de madeira, fiquem em cima delas e apertem S (ou ▼).' },
       { c: 12, r: 21, quem: 'ithalo', texto: 'Esse sapo laranja se agacha antes de pular. Fiquem espertos!' },
       { c: 46, r: 49, quem: 'daniel', texto: 'Lá embaixo está a Rainha Gosma! Quando ela piscar vermelho, cambalhota! Depois do rasante ela cansa: chinelo nela!' },
+    ] },
+  { nome: 'Mundo 3: Núcleo de Marte', mapa: MAPA3, chefe: 'cerebro', nomeChefe: 'GRANDE CÉREBRO', musica: 'fase2', saida: 'lucca', cenaDepois: 'final',
+    fundo: '#1f0a1c', rochas: 0x3a1238, bolhas: 0xff8fb8, bloco: 'bloco3', decor: ['cogumelinho', 'cristal', 'planta'], pingos: true,
+    dicas: [
+      { c: 4, r: 34, quem: 'anne', texto: 'Este é o centro de Marte, a cidade dos gosmentos. O Lucca está do outro lado!' },
+      { c: 33, r: 34, quem: 'ithalo', texto: 'O Grande Cérebro tem um ESCUDO! Pulem as ondas, saiam das luzes vermelhas e ataquem quando ele descer cansado.' },
     ] },
 ];
 
@@ -469,6 +515,7 @@ class Fase extends Phaser.Scene {
     this.bolas = this.physics.add.group();
     this.bombas = this.physics.add.group();
     this.gotas = this.physics.add.group({ allowGravity: false });
+    this.perigos = this.physics.add.group({ allowGravity: false });
 
     this.physics.add.collider(this.jogadores, this.chao);
     this.physics.add.collider(this.itens, this.chao);
@@ -485,11 +532,13 @@ class Fase extends Phaser.Scene {
     this.physics.add.overlap(this.bombas, this.inimigos, (b) => this.explodir(b));
     this.physics.add.overlap(this.gotas, this.inimigos, (g, s) => { if (!g.active) return; const d = g.body.velocity.x > 0 ? 1 : -1; g.destroy(); this.molhar(s, d); });
     this.physics.add.collider(this.gotas, this.chao, (g) => g.destroy());
+    this.physics.add.overlap(this.jogadores, this.perigos, (j, o) => this.levarDano(j, o, true));
+    this.physics.add.collider(this.perigos, this.chao, (o) => { if (o.body.blocked.left || o.body.blocked.right) o.destroy(); });
     this.physics.add.collider(this.inimigos, this.chao);
     // plataformas atravessáveis: só seguram quem vem de cima
     const deCima = (o, p) => o.body.velocity.y >= 0 && o.body.bottom <= p.body.top + 12;
     this.physics.add.collider(this.jogadores, this.pontes, null, (j, p) => !j.descendo && !j.escalando && deCima(j, p));
-    this.physics.add.collider(this.inimigos, this.pontes, null, (s, p) => s.tipo !== 'morcego' && deCima(s, p));
+    this.physics.add.collider(this.inimigos, this.pontes, null, (s, p) => s.tipo !== 'morcego' && !s.voa && deCima(s, p));
     this.physics.add.overlap(this.pedras, this.inimigos, (pedra, ini) => {
       if (!pedra.active || !ini.active) return;
       const dir = pedra.body.velocity.x > 0 ? 1 : -1; // ler a direção ANTES de destruir a pedra
@@ -623,6 +672,11 @@ class Fase extends Phaser.Scene {
     g.fillStyle(0x5a3a1e).fillRect(0, 0, 32, 32).fillStyle(0x3fa83f).fillRect(0, 0, 32, 7).fillStyle(0x2f7a2f).fillRect(0, 7, 32, 2)
      .fillStyle(0x4a2e16).fillRect(6, 16, 5, 4).fillRect(20, 24, 6, 3);
     g.generateTexture('bloco0', 32, 32).clear();
+    g.fillStyle(0x6b1f4f).fillRect(0, 0, 32, 32).fillStyle(0xa83a7a).fillRect(0, 0, 32, 5).fillStyle(0x4a1236).fillCircle(9, 16, 4).fillCircle(23, 24, 3)
+     .fillStyle(0xff8fb8).fillCircle(22, 12, 2);
+    g.generateTexture('bloco3', 32, 32).clear();
+    g.fillStyle(0xff8fb8, 0.9).fillTriangle(0, 24, 20, 0, 40, 24).fillStyle(0xffd0e4).fillTriangle(12, 24, 20, 8, 28, 24);
+    g.generateTexture('onda', 40, 24).clear();
     g.fillStyle(0x2f7a2f).fillRect(7, 6, 2, 10).fillStyle(0xffe14d).fillCircle(8, 5, 2).fillStyle(0xff9be8).fillCircle(5, 4, 2.5).fillCircle(11, 4, 2.5).fillCircle(8, 1.5, 2.5).fillCircle(8, 7, 2.5).fillStyle(0xffe14d).fillCircle(8, 4.5, 2);
     g.generateTexture('flor', 16, 16).clear();
     g.fillStyle(0x3fa83f).fillTriangle(0, 12, 3, 0, 6, 12).fillTriangle(5, 12, 9, 2, 12, 12).fillTriangle(10, 12, 14, 4, 16, 12);
@@ -725,6 +779,12 @@ class Fase extends Phaser.Scene {
     } else if (tipo === 'saltador') {
       s.vida = 3; s.velocidade = 0; s.recarga = Phaser.Math.Between(800, 2000);
       s.body.setSize(36, 26).setOffset(4, 12);
+    } else if (tipo === 'cerebro') {
+      s.vida = s.vidaMax = 45; s.velocidade = 70; s.setScale(2.4); s.body.setAllowGravity(false);
+      s.body.setSize(66, 50).setOffset(7, 2); s.recarga = 2200; s.ativado = false; s.casaY = y; s.estado = 'flutuar';
+      s.escudo = true; s.ataques = 0; s.relogio = 0;
+      s.bolha = this.add.circle(x, y, 95, 0x6bd1ff, 0.18).setStrokeStyle(4, 0xbfeeff, 0.7).setDepth(5);
+      this.tweens.add({ targets: s.bolha, scale: 1.06, duration: 600, yoyo: true, repeat: -1 });
     } else if (tipo === 'rainha') {
       s.vida = s.vidaMax = 40; s.velocidade = 110; s.setScale(2.2); s.body.setAllowGravity(false);
       s.body.setSize(60, 40).setOffset(10, 2); s.recarga = 2500; s.ativado = false; s.casaY = y; s.relogio = 0; s.estado = 'flutuar';
@@ -794,6 +854,67 @@ class Fase extends Phaser.Scene {
     }
   }
 
+  // ---- Grande Cérebro: escudo, ondas no chão, raios do céu e ovos; depois de dois ataques desce cansado e sem escudo
+  pensarCerebro(s, delta, alvo) {
+    if (s.bolha) s.bolha.setPosition(s.x, s.y).setVisible(s.escudo);
+    if (!s.ativado) {
+      if (alvo && alvo.j.x > 37 * T) { s.ativado = true; SOM.tocar('chefe'); SOM.musica('chefe'); this.texto(s.x, s.y - 120, 'O GRANDE CÉREBRO ACORDOU!', '#ff5d73'); this.cameras.main.shake(300, 0.01); }
+      s.setVelocity(0, 0); return;
+    }
+    const raiva = s.vida < s.vidaMax / 2;
+    const chao = this.mapaH - T; // topo do chão da arena
+    s.relogio += delta;
+    if (s.estado === 'flutuar') {
+      const minX = 38 * T, maxX = this.mapaW - 3 * T;
+      const alvoX = (minX + maxX) / 2 + Math.sin(s.relogio / 2200) * (maxX - minX) / 2;
+      s.setVelocity((alvoX - s.x) * 1.5, (s.casaY + Math.sin(s.relogio / 500) * 15 - s.y) * 3);
+      s.recarga -= delta;
+      if (s.recarga <= 0 && alvo) {
+        s.recarga = raiva ? 1700 : 2400;
+        if (s.ataques >= 2) { s.ataques = 0; s.estado = 'descer'; this.texto(s.x, s.y - 110, 'Ufa... cansei!', '#ffe14d'); return; }
+        s.ataques++;
+        const at = Phaser.Utils.Array.GetRandom(this.inimigos.countActive() < 7 ? ['onda', 'raios', 'ovos'] : ['onda', 'raios']);
+        if (at === 'onda') {
+          SOM.tocar('tremor');
+          [-1, 1].forEach(d => {
+            const o = this.perigos.create(s.x, chao - 14, 'onda'); o.setVelocityX(d * (raiva ? 330 : 260)).setFlipX(d < 0);
+            this.time.delayedCall(5000, () => o.active && o.destroy());
+          });
+        } else if (at === 'raios') {
+          const xs = [alvo.j.x, alvo.j.x + Phaser.Math.Between(150, 300) * (Math.random() < 0.5 ? -1 : 1)];
+          if (raiva) xs.push(Phaser.Math.Between(38 * T, this.mapaW - 3 * T));
+          xs.forEach(x => this.raio(x));
+        } else {
+          for (let i = 0; i < 2; i++) { const f = this.criarInimigo(s.x + (i ? 50 : -50), s.y + 60, Math.random() < 0.5 ? 'sombra' : 'saltador'); f.vida = 2; this.texto(f.x, f.y, 'PLOP!', '#ff8fb8'); }
+          SOM.tocar('cuspe');
+        }
+      }
+    } else if (s.estado === 'descer') {
+      s.setVelocity(0, 200);
+      if (s.y >= chao - 80) { s.estado = 'exposto'; s.relogioEstado = 0; s.escudo = false; s.setVelocity(0, 0); SOM.tocar('escapou'); this.texto(s.x, s.y - 110, 'SEM ESCUDO! ATAQUEM!', '#9dff4a'); }
+    } else if (s.estado === 'exposto') {
+      s.relogioEstado += delta; s.setVelocity(0, 0);
+      if (s.relogioEstado > (raiva ? 2800 : 3600)) { s.escudo = true; s.estado = 'subir'; }
+    } else if (s.estado === 'subir') {
+      s.setVelocity(0, -200);
+      if (s.y <= s.casaY) s.estado = 'flutuar';
+    }
+  }
+
+  // coluna de luz: primeiro aviso vermelho, depois o raio
+  raio(x) {
+    const topo = 2 * T, alt = this.mapaH - 3 * T;
+    const aviso = this.add.rectangle(x, topo + alt / 2, 44, alt, 0xff3b6b, 0.22).setDepth(4);
+    this.tweens.add({ targets: aviso, alpha: 0.45, duration: 150, yoyo: true, repeat: 3 });
+    this.time.delayedCall(850, () => {
+      aviso.destroy(); if (this.acabou) return;
+      const luz = this.add.rectangle(x, topo + alt / 2, 30, alt, 0xffef5d, 0.85).setDepth(4);
+      SOM.tocar('explosao');
+      this.jogadores.forEach(j => { if (!j.caido && Math.abs(j.x - x) < 26) this.levarDano(j, { x, y: j.y }, true); });
+      this.tweens.add({ targets: luz, alpha: 0, scaleX: 0.2, duration: 350, onComplete: () => luz.destroy() });
+    });
+  }
+
   maisPerto(x, y) {
     let melhor = null, d = Infinity;
     this.jogadores.forEach(j => { if (j.caido) return; const dd = Phaser.Math.Distance.Between(x, y, j.x, j.y); if (dd < d) { d = dd; melhor = j; } });
@@ -817,7 +938,7 @@ SOM.tocar('cuspe');
       s.atordoado -= delta;
       if (s.empurrao > 0) s.empurrao -= delta; else s.setVelocityX(0);
       if (s.tipo === 'morcego') s.setVelocityY(s.body.blocked.down ? 0 : 200); // desmaiado cai
-      if (s.tipo === 'rainha') s.setVelocityY(0);
+      if (s.voa) s.setVelocityY(0);
       if (s.zzz) s.zzz.setPosition(s.x, s.y - 40);
       if (s.atordoado <= 0) { s.setAngle(0); if (s.zzz) { s.zzz.destroy(); s.zzz = null; } }
       return;
@@ -889,6 +1010,8 @@ SOM.tocar('cuspe');
       }
       s.setTexture('saltador_' + (s.body.blocked.down ? 0 : 1));
       return;
+    } else if (s.tipo === 'cerebro') {
+      this.pensarCerebro(s, delta, alvo);
     } else if (s.tipo === 'rainha') {
       this.pensarRainha(s, delta, alvo);
     } else if (s.tipo === 'chefao') {
@@ -945,7 +1068,7 @@ SOM.tocar('cuspe');
       // a câmera segue o primeiro jogador vivo; o outro acompanha
       this.alvoCamera.x = vivos[0].x;
       // na luta contra a Rainha (que voa), a câmera olha mais para cima
-      const olharCima = this.chefao && this.chefao.active && this.chefao.ativado && this.chefao.voa ? 110 : 0;
+      const olharCima = this.chefao && this.chefao.active && this.chefao.ativado && this.chefao.voa ? (this.chefao.tipo === 'cerebro' ? 170 : 110) : 0;
       this.alvoCamera.y = vivos[0].y - olharCima;
     }
     // co-op: quem ficar fora da tela por 1,5 s é trazido para perto do parceiro
@@ -1165,7 +1288,7 @@ SOM.tocar('cuspe');
     }
   }
   molhar(s, d) {
-    if (!s.active) return;
+    if (!s.active || s.escudo) return;
     s.vida -= 0.5;
     s.setTint(0x6bd1ff); this.time.delayedCall(80, () => s.active && s.clearTint());
     if (!s.chefe) { s.setVelocityX(260 * d); if (!(s.atordoado > 0)) { s.atordoado = 220; s.empurrao = 220; } }
@@ -1196,6 +1319,7 @@ SOM.tocar('cuspe');
 
   acertar(s, dano, dir) {
     if (!s.active) return;
+    if (s.escudo) { if (!s.avisoEscudo) { s.avisoEscudo = true; this.texto(s.x, s.y - 110, 'ESCUDO!', '#bfeeff'); this.time.delayedCall(700, () => s.avisoEscudo = false); } return; }
     s.vida -= dano; if (s.vida > 0) SOM.tocar('acerto');
     s.setTint(0xffffff);
     this.time.delayedCall(80, () => s.active && s.clearTint());
@@ -1338,6 +1462,7 @@ SOM.tocar('cuspe');
 
   confete(s) {
     if (s.zzz) { s.zzz.destroy(); s.zzz = null; }
+    if (s.bolha) { s.bolha.destroy(); s.bolha = null; }
     const vitima = s.vitima; s.vitima = null;
     const x = s.x, base = s.body ? s.body.bottom : s.y + 20, esc = s.scaleX;
     s.body.enable = false; s.setActive(false);
