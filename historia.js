@@ -26,7 +26,10 @@ const PALETA_LUCCA = { h: 0xc9933f, H: 0xe8bd6a, s: 0xf2cfae, d: 0xd9b090, e: 0x
 // ---- hologramas: mesmo desenho dos meninos, em azul, com um detalhe de cada um
 const FAMILIA = {
   daniel: { nome: 'Papai Daniel', cor: '#6be4ff', detalhe: 'barba' },
-  anne:   { nome: 'Mamãe Anne',   cor: '#ff9be8', detalhe: 'cabelo' },
+  // Anne: cabelo na altura dos ombros com luzes, blusa florida e colar
+  anne:   { nome: 'Mamãe Anne',   cor: '#ff9be8', detalhe: 'anne',
+    pal: { h: 0x8a6038, H: 0xd9b47a, s: 0xe8c09a, d: 0xcfa27c, e: 0x2a1d14, m: 0xc0605a, w: 0xf2e8d2, W: 0xd9ccb0,
+           f: 0xff8fb8, g: 0x3f9a4f, o: 0xf0a030, n: 0xffffff, j: 0x4a6fa0, J: 0x3a5a85, k: 0x8a5a3a } },
   ithalo: { nome: 'Primo Ithalo', cor: '#9bff9b', detalhe: 'bone' },
 };
 
@@ -42,12 +45,18 @@ function gerarTexturasHistoria(cena) {
   Object.entries(FAMILIA).forEach(([id, f]) => {
     const linhas = [...PIXEL_CORPO, ...PIXEL_PERNAS.parado].map(l => [...l]);
     if (f.detalhe === 'barba') { [5, 6, 7].forEach(y => { linhas[y][4] = 'h'; linhas[y][11] = 'h'; }); linhas[7][6] = linhas[7][7] = linhas[7][8] = linhas[7][9] = 'h'; }
-    if (f.detalhe === 'cabelo') { for (let y = 3; y < 11; y++) { linhas[y][2] = 'h'; linhas[y][3] = 'h'; linhas[y][12] = 'h'; } }
+    if (f.detalhe === 'anne') {
+      for (let y = 1; y < 11; y++) { linhas[y][2] = y % 2 ? 'H' : 'h'; linhas[y][3] = 'h'; linhas[y][12] = 'h'; linhas[y][13] = y % 2 ? 'h' : 'H'; }
+      [[5, 1], [7, 1], [9, 2]].forEach(([x, y]) => { linhas[y][x] = 'H'; });
+      linhas[9][7] = linhas[9][8] = 'n'; linhas[10][6] = linhas[10][9] = 'n';        // colar
+      const flores = [[5, 11, 'f'], [9, 11, 'g'], [6, 13, 'o'], [10, 13, 'f'], [4, 12, 'g'], [8, 14, 'f'], [5, 15, 'g'], [10, 15, 'o'], [7, 12, 'g']];
+      flores.forEach(([x, y, c]) => { if (linhas[y][x] === 'w' || linhas[y][x] === 'W') linhas[y][x] = c; });
+    }
     if (f.detalhe === 'bone') { for (let x = 3; x < 15; x++) linhas[2][x] = 'c'; linhas[3][13] = linhas[3][14] = 'c'; }
     const base = Phaser.Display.Color.HexStringToColor(f.cor).color;
-    const pal = { h: 0x1d5a7a, s: base, d: base, e: 0x0b2a3a, m: 0x0b2a3a, w: 0xffffff, W: base, j: base, J: 0x1d5a7a, k: 0x1d5a7a, o: 0xffffff, c: 0xffffff };
+    const pal = f.pal || { h: 0x1d5a7a, s: base, d: base, e: 0x0b2a3a, m: 0x0b2a3a, w: 0xffffff, W: base, j: base, J: 0x1d5a7a, k: 0x1d5a7a, o: 0xffffff, c: 0xffffff };
     pintar(linhas.map(l => l.join('')), pal);
-    g.fillStyle(0x000000, 0.25); for (let y = 0; y < 48; y += 4) g.fillRect(0, y, 32, 1); // linhas de holograma
+    g.fillStyle(f.pal ? base : 0x000000, f.pal ? 0.18 : 0.25); for (let y = 0; y < 48; y += 4) g.fillRect(0, y, 32, 1); // linhas de holograma
     g.generateTexture('holo_' + id, 32, 48).clear();
   });
 
