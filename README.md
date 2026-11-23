@@ -22,3 +22,6 @@ O mapa é desenhado em texto no `game.js` (constante `MAPA`), gerado por `tools/
 **Armas:** abra os baús espalhados pelo mapa. A arma nova vai para o botão de arma e a antiga fica no chão (dá para pegar de volta). O chinelo está sempre no outro botão.
 
 **Som:** efeitos e música são gerados por código (`som.js`). Tecla **M** ou o botão 🔊 liga/desliga.
+
+**Mundos:** Mundo 1 (Cavernas Gosmentas, chefe Gosmão) e Mundo 2 (Torre da Nave-Mãe, subida vertical com o novo saltador e a chefe Rainha Gosma). Ao vencer um mundo, o próximo fica liberado no menu.
+Mapas: `tools/mapa.py` e `tools/mapa2.py`. Pixel art dos alienígenas: `tools/inimigos.py`.

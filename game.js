@@ -54,8 +54,89 @@ const MAPA = [
   '####################################################################################################',
 ];
 
-const MAPA_W = MAPA[0].length * T, MAPA_H = MAPA.length * T;
-const TIPOS = { g: 'sombra', v: 'morcego', c: 'cuspidor', m: 'comedor', a: 'agarrador', b: 'chefao' };
+
+// Mundo 2 (gerado por tools/mapa2.py). Novo: s saltador
+const MAPA2 = [
+  '############################################################',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                             B                            #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                                       E  #',
+  '###---------################################################',
+  '#                                                          #',
+  '#                                                          #',
+  '#    ---------                                             #',
+  '#                                                          #',
+  '#             s             a       C     g                #',
+  '################################################---------###',
+  '#                                                          #',
+  '#                                 V                        #',
+  '#                   -------       -------     ---------    #',
+  '#                                                          #',
+  '#       T         m       S   H    g         c             #',
+  '###---------##################H#############################',
+  '#                             H                            #',
+  '#                         v   H                            #',
+  '#    ---------                H                            #',
+  '#                             H                            #',
+  '#         a              s    H  G      s                  #',
+  '################################################---------###',
+  '#                                                          #',
+  '#                                                          #',
+  '#                   -------       -------     ---------    #',
+  '#                                                          #',
+  '#                   s         H     c   M       g   T      #',
+  '###---------##################H#############################',
+  '#                             H                            #',
+  '#                             H v                          #',
+  '#    ---------                H                            #',
+  '#                             H                            #',
+  '#     T     m         A       s           g                #',
+  '################################################---------###',
+  '#                                                          #',
+  '#                                                          #',
+  '#                   -------       -------     ---------    #',
+  '#                                                          #',
+  '#              s         c    H         a         S        #',
+  '###---------##################H#############################',
+  '#                             H                            #',
+  '#                             H                            #',
+  '#    ---------              v H                            #',
+  '#                             H                            #',
+  '#                   g         H     s       G       T      #',
+  '################################################---------###',
+  '#                                                          #',
+  '#                                                          #',
+  '#                                             ---------    #',
+  '#   P                                                      #',
+  '#                                                          #',
+  '############################################################',
+];
+
+const TIPOS = { g: 'sombra', v: 'morcego', c: 'cuspidor', m: 'comedor', a: 'agarrador', s: 'saltador' };
+
+const FASES = [
+  { nome: 'Mundo 1: Cavernas Gosmentas', mapa: MAPA, chefe: 'chefao', nomeChefe: 'GOSMÃO', musica: 'fase1',
+    fundo: '#0f2418', rochas: 0x163626, bolhas: 0x7dff95, bloco: 'bloco' },
+  { nome: 'Mundo 2: Torre da Nave-Mãe', mapa: MAPA2, chefe: 'rainha', nomeChefe: 'RAINHA GOSMA', musica: 'fase2',
+    fundo: '#16102b', rochas: 0x2a2050, bolhas: 0xc77dff, bloco: 'bloco2' },
+];
 
 // ---- personagens em pixel art (16x24, desenhado em dobro)
 // h cabelo  s pele  d pele sombra  e olho  m boca  w camiseta  W camiseta sombra  j calça  J calça sombra  k tênis  o sola
@@ -119,6 +200,14 @@ const INIMIGOS_PIXEL = {
   agarrador: { pal: { g: 0x2fa88a, G: 0x1f7a63, o: 0x0d3a2e, t: 0x46c9a6, p: 0xff6bd5, k: 0x111111, l: 0xb5ffe9, w: 0xffffff }, frames: [
     ['........................', '.........oooooo.........', '......oooggggggooo......', '.....olgggggggggggo.....', '....oggggggggggggggo....', '....oggggggggggggggo....', '...ogggppggggggppgggo...', '...ogggpkggggggpkgggo...', '...oggggggggggggggggo...', '...oggggggggggggggggo...', '....oggggggggggggggo....', '....oGGGGGGGGGGGGGGo.oo.', '...otoGGGGGGGGGGGGo.oo..', '...oo.ooGGGGGGGooGo.oo..', '...oo...oooooGo..oo.oo..', '....oo.oo....oo.oo...oo.', '....oo.oo....oo.oo...oo.', '....oo.oo....oo.oo...oo.', '...oo...oo..oo...oo.oo..', '...oo...oo..oo...oo.oo..', '...oo...oo..oo...oo.oo..', '....oo.oo....oo.oo...oo.', '....oo.oo....oo.oo...oo.', '........................'],
     ['........................', '.........oooooo.........', '......oooggggggooo......', '.....olgggggggggggo.....', '....oggggggggggggggo....', '....oggggggggggggggo....', '...ogggppggggggppgggo...', '...ogggpkggggggpkgggo...', '...oggggggggggggggggo...', '...oggggggggggggggggo...', '....oggggggggggggggo....', '...oGGGGGGGGGGGGGGGooo..', '....oGGGGGGGGGGGGGo..oo.', '....otoGGGGGGGGoGo...oo.', '....oo.otGooGGo.oo...oo.', '...oo...oo..oo...oo.oo..', '...oo...oo..oo...oo.oo..', '...oo...oo..oo...oo.oo..', '....oo.oo....oo.oo...oo.', '....oo.oo....oo.oo...oo.', '....oo.oo....oo.oo...oo.', '...oo...oo..oo...oo.oo..', '...oo...oo..oo...oo.oo..', '........................'],
+  ] },
+  saltador: { pal: { g: 0xffa63d, G: 0xd9761f, o: 0x5e2a08, m: 0x5e2a08, w: 0xffffff, k: 0x111111 }, frames: [
+    ['......................', '......................', '......................', '......................', '......................', '......................', '....oooo......oooo....', '...oggggo....oggggo...', '...ogwwggooooggwwgo...', '...ogwkggggggggwkgo...', '...oggggggggggggggo...', '..oggggggggggggggggo..', '.oggggggggggggggggggo.', '.oggggggggggggggggggo.', '.ogggggmmmmmmmmgggggo.', '.oGGGGGGGGGGGGGGGGGGo.', '..oGGGGGGGGGGGGGGGGo..', '.oGGGGGGGGGGGGGGGGGGo.', '.oGGGGoGGGGGGGGoGGGGo.', '.ooooo.oooooooo.ooooo.'],
+    ['......................', '......................', '......................', '....oooooooooooooo....', '...oggggggggggggggo...', '...ogwwggggggggwwgo...', '...ogwkggggggggwkgo...', '...oggggggggggggggo...', '...oggggggggggggggo...', '...oggggggggggggggo...', '...oggggggggggggggo...', '...ogggmmmmmmmmgggo...', '...oggggggggggggggo...', '...oggggggggggggggo...', '....oggggggggggggo....', '....oGGGGGGGGGGGGo....', '...oGGGGGGGGGGGGGGo...', '...oGGGoGGGGGGoGGGo...', '...oGGo.oooooo.oGGo...', '...oooo........oooo...'],
+  ] },
+  rainha: { pal: { g: 0xc77dff, G: 0x9a4fd6, o: 0x3a1260, c: 0xffd23f, r: 0xff3b6b, w: 0xffffff, k: 0x111111, y: 0xfff36b, m: 0x3a1260, l: 0xf0d9ff }, frames: [
+    ['........................................', '.................r..r..r................', '.............c...c..c..c...c............', '.............c...c..c..c...c............', '.............ccccccccccccccc............', '...........ooooggggggggggoooo...........', '.........ooggggggggggggggggggoo.........', '.......oolgggggggggggggggggggggoo.......', '......oglgggyyyyggggggggyyyygggggo......', '.....oggggggykkyggggggggykkyggggggo.....', '....ogggggggykkyggggggggykkygggggggo....', '...oggggggggyyyyggggggggyyyyggggggggo...', '...ogggggggggggmggggggggmgggggggggggo...', '..ogggggggggggggmmmmmmmmgggggggggggggo..', '..oggggggggggggggggggggggggggggggggggo..', '..oggggggggggggggggggggggggggggggggggo..', '..oooooooooooooooooooooooooooooooooooo..', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '........................................'],
+    ['........................................', '.................r..r..r................', '.............c...c..c..c...c............', '.............c...c..c..c...c............', '.............ccccccccccccccc............', '...........ooooggggggggggoooo...........', '.........ooggggggggggggggggggoo.........', '.......oolgggggggggggggggggggggoo.......', '......oglgggyyyyggggggggyyyygggggo......', '.....oggggggykkyggggggggykkyggggggo.....', '....ogggggggykkyggggggggykkygggggggo....', '...oggggggggyyyyggggggggyyyyggggggggo...', '...ogggggggggggmggggggggmgggggggggggo...', '..ogggggggggggggmmmmmmmmgggggggggggggo..', '..oggggggggggggggggggggggggggggggggggo..', '..oggggggggggggggggggggggggggggggggggo..', '..oooooooooooooooooooooooooooooooooooo..', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '......GGo.GGo...GGo.GGo...GGo.GGo...GGo.', '.....GGo...GGo.GGo...GGo.GGo...GGo.GGo..', '........................................'],
   ] },
 };
 
@@ -194,7 +283,15 @@ class Menu extends Phaser.Scene {
 
   passo2(jogadores) {
     this.opcoes('Escolha a dificuldade', DIFICULDADES.map(d => d.nome), DIFICULDADES.map(d => d.cor),
-      i => this.scene.start('Fase', { jogadores, dificuldade: i }));
+      i => this.time.delayedCall(50, () => this.passo3(jogadores, i)));
+  }
+
+  passo3(jogadores, dificuldade) {
+    let liberado = 0;
+    try { liberado = +localStorage.getItem('cdm_mundo') || 0; } catch (e) {}
+    if (liberado <= 0) { this.scene.start('Fase', { jogadores, dificuldade, nivel: 0 }); return; }
+    const mundos = FASES.slice(0, liberado + 1);
+    this.opcoes('Qual mundo?', mundos.map(f => f.nome), null, i => this.scene.start('Fase', { jogadores, dificuldade, nivel: i }));
   }
 }
 
@@ -206,23 +303,25 @@ class Fase extends Phaser.Scene {
     if (data && data.jogadores) this.registry.set('config', data);
     const cfg = this.registry.get('config');
     this.escolha = cfg.jogadores; this.dif = DIFICULDADES[cfg.dificuldade ?? 1];
+    this.nivel = cfg.nivel || 0; this.fase = FASES[this.nivel];
+    this.mapa = this.fase.mapa; this.mapaW = this.mapa[0].length * T; this.mapaH = this.mapa.length * T;
     this.acabou = false;
   }
 
   create() {
     this.criarTexturas();
-    this.physics.world.setBounds(0, 0, MAPA_W, MAPA_H + 200);
-    this.cameras.main.setBounds(0, 0, MAPA_W, MAPA_H);
-    this.cameras.main.setBackgroundColor('#0f2418');
+    this.physics.world.setBounds(0, 0, this.mapaW, this.mapaH + 200);
+    this.cameras.main.setBounds(0, 0, this.mapaW, this.mapaH);
+    this.cameras.main.setBackgroundColor(this.fase.fundo);
 
     // fundo: rochas escuras ao longe (parallax)
     for (let i = 0; i < 40; i++) {
-      this.add.ellipse(Phaser.Math.Between(0, MAPA_W), Phaser.Math.Between(0, MAPA_H), Phaser.Math.Between(120, 320), Phaser.Math.Between(80, 220), 0x163626, 0.6)
+      this.add.ellipse(Phaser.Math.Between(0, this.mapaW), Phaser.Math.Between(0, this.mapaH), Phaser.Math.Between(120, 320), Phaser.Math.Between(80, 220), this.fase.rochas, 0.6)
         .setScrollFactor(0.3).setDepth(-10);
     }
     // fundo: bolhas de gosma flutuando ao longe
     for (let i = 0; i < 220; i++) {
-      this.add.circle(Phaser.Math.Between(0, MAPA_W), Phaser.Math.Between(0, MAPA_H), Phaser.Math.Between(1, 3), 0x7dff95, 0.15).setScrollFactor(0.5);
+      this.add.circle(Phaser.Math.Between(0, this.mapaW), Phaser.Math.Between(0, this.mapaH), Phaser.Math.Between(1, 3), this.fase.bolhas, 0.15).setScrollFactor(0.5);
     }
 
     // lê o mapa: junta blocos vizinhos da mesma linha em uma peça só
@@ -230,14 +329,14 @@ class Fase extends Phaser.Scene {
     this.pontes = this.physics.add.staticGroup();
     this.escadas = this.physics.add.staticGroup();
     const pecas = [];
-    MAPA.forEach((linha, r) => {
+    this.mapa.forEach((linha, r) => {
       let c = 0;
       while (c < linha.length) {
         const ch = linha[c];
         if (ch === '#' || ch === '-') {
           let f = c; while (f + 1 < linha.length && linha[f + 1] === ch) f++;
           const larg = (f - c + 1) * T;
-          const p = this.add.tileSprite(c * T, r * T, larg, ch === '#' ? T : 12, ch === '#' ? 'bloco' : 'ponte').setOrigin(0, 0);
+          const p = this.add.tileSprite(c * T, r * T, larg, ch === '#' ? T : 12, ch === '#' ? this.fase.bloco : 'ponte').setOrigin(0, 0);
           this.physics.add.existing(p, true);
           (ch === '#' ? this.chao : this.pontes).add(p);
           c = f + 1; continue;
@@ -274,7 +373,7 @@ class Fase extends Phaser.Scene {
     this.inimigos = this.physics.add.group();
     let n = 0;
     pecas.forEach(p => {
-      if (p.ch === 'B') { this.chefao = this.criarInimigo(p.x, p.y - 60, 'chefao'); return; }
+      if (p.ch === 'B') { this.chefao = this.criarInimigo(p.x, p.y - 60, this.fase.chefe); return; }
       const tipo = TIPOS[p.ch.toLowerCase()];
       if (!tipo) return;
       const extra = p.ch !== p.ch.toLowerCase();
@@ -318,7 +417,7 @@ class Fase extends Phaser.Scene {
     this.physics.add.collider(this.pedras, this.chao, (pedra) => pedra.destroy());
     this.physics.add.overlap(this.jogadores, this.inimigos, (j, ini) => this.levarDano(j, ini));
     this.physics.add.overlap(this.jogadores, this.chegada, () => {
-      if (this.chefao.active) { if (!this.avisouChefao) { this.avisouChefao = true; this.texto(this.chegada.x, this.chegada.y - 110, 'Derrote o GOSMÃO primeiro!', '#ff5d73'); this.time.delayedCall(1500, () => this.avisouChefao = false); } return; }
+      if (this.chefao.active) { if (!this.avisouChefao) { this.avisouChefao = true; this.texto(this.chegada.x, this.chegada.y - 110, 'Derrote ' + (this.fase.chefe === 'rainha' ? 'a ' : 'o ') + this.fase.nomeChefe + ' primeiro!', '#ff5d73'); this.time.delayedCall(1500, () => this.avisouChefao = false); } return; }
       this.vitoria();
     });
     this.physics.add.overlap(this.jogadores, this.gosmas, (j, g) => { if (!g.active) return; g.destroy(); this.levarDano(j, g, true); });
@@ -331,7 +430,8 @@ class Fase extends Phaser.Scene {
     this.alvoCamera = this.add.zone(0, 0, 1, 1);
     this.cameras.main.startFollow(this.alvoCamera, true, 0.1, 0.1);
 
-    SOM.musica('fase1');
+    SOM.musica(this.fase.musica);
+    this.mostrarTitulo();
     this.input.keyboard.on('keydown-M', () => SOM.alternarMudo());
     this.hud = this.add.text(16, 12, '', { fontFamily: 'Arial', fontSize: 20, color: '#ffffff' }).setScrollFactor(0).setDepth(10);
     this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
@@ -339,10 +439,17 @@ class Fase extends Phaser.Scene {
   }
 
   // botões na tela para celular/tablet (controlam o Jogador 1)
+  mostrarTitulo() {
+    const t = this.add.text(W / 2, 120, this.fase.nome, { fontFamily: 'Arial Black', fontSize: 34, color: '#ffffff', stroke: '#000', strokeThickness: 6 })
+      .setOrigin(0.5).setScrollFactor(0).setDepth(40);
+    this.tweens.add({ targets: t, alpha: 0, delay: 1800, duration: 800, onComplete: () => t.destroy() });
+  }
+
   // plantas brilhantes, cristais e gosma pingando do teto
   decorar() {
-    const vazio = (r, c) => MAPA[r] && (MAPA[r][c] === ' ' || 'gvcmaGVCMATPE'.includes(MAPA[r][c]));
-    MAPA.forEach((linha, r) => [...linha].forEach((ch, c) => {
+    const M = this.mapa;
+    const vazio = (r, c) => M[r] && (M[r][c] === ' ' || 'gvcmasGVCMASTPEB'.includes(M[r][c]));
+    M.forEach((linha, r) => [...linha].forEach((ch, c) => {
       if (ch !== '#') return;
       const x = c * T + T / 2;
       if (r > 0 && vazio(r - 1, c) && Math.random() < 0.22) {
@@ -412,6 +519,9 @@ class Fase extends Phaser.Scene {
     const g = this.add.graphics();
     g.fillStyle(0x24453a).fillRect(0, 0, 32, 32).fillStyle(0x3d7a5a).fillRect(0, 0, 32, 6).fillStyle(0x1b3329).fillRect(6, 14, 8, 6).fillRect(20, 22, 7, 5);
     g.generateTexture('bloco', 32, 32).clear();
+    g.fillStyle(0x3a3a5a).fillRect(0, 0, 32, 32).fillStyle(0x5a5a8a).fillRect(0, 0, 32, 4).fillStyle(0x26263d).fillRect(0, 30, 32, 2)
+     .fillStyle(0x8a8ac0).fillCircle(5, 9, 1.5).fillCircle(27, 9, 1.5).fillCircle(5, 25, 1.5).fillCircle(27, 25, 1.5).fillStyle(0xc77dff).fillRect(12, 15, 8, 2);
+    g.generateTexture('bloco2', 32, 32).clear();
     g.fillStyle(0x6b5a3a).fillRect(0, 0, 32, 12).fillStyle(0x8a7550).fillRect(0, 0, 32, 4).fillStyle(0x4a3d26).fillRect(15, 0, 2, 12);
     g.generateTexture('ponte', 32, 12).clear();
     g.fillStyle(0xa8823f).fillRect(4, 0, 4, 32).fillRect(24, 0, 4, 32).fillRect(4, 6, 24, 4).fillRect(4, 22, 24, 4);
@@ -489,7 +599,7 @@ class Fase extends Phaser.Scene {
 
   criarInimigo(x, y, tipo) {
     const s = this.inimigos.create(x, y, tipo === 'chefao' ? 'sombra' : tipo);
-    s.tipo = tipo;
+    s.tipo = tipo; s.chefe = tipo === 'chefao' || tipo === 'rainha';
     s.setCollideWorldBounds(true).setBounce(0);
     if (tipo === 'sombra') {
       s.vida = 4; s.velocidade = Phaser.Math.Between(70, 110);
@@ -505,6 +615,12 @@ class Fase extends Phaser.Scene {
       s.setVelocityX(s.velocidade * (Math.random() < 0.5 ? -1 : 1));
       if (tipo === 'comedor') s.body.setSize(50, 50).setOffset(5, 8);
       this.tweens.add({ targets: s, scaleX: 1.08, duration: 500, yoyo: true, repeat: -1 });
+    } else if (tipo === 'saltador') {
+      s.vida = 3; s.velocidade = 0; s.recarga = Phaser.Math.Between(800, 2000);
+      s.body.setSize(36, 26).setOffset(4, 12);
+    } else if (tipo === 'rainha') {
+      s.vida = s.vidaMax = 40; s.velocidade = 110; s.setScale(2.2); s.body.setAllowGravity(false);
+      s.body.setSize(60, 40).setOffset(10, 2); s.recarga = 2500; s.ativado = false; s.casaY = y; s.relogio = 0; s.estado = 'flutuar';
     } else if (tipo === 'chefao') {
       s.vida = s.vidaMax = 30; s.velocidade = 90; s.setScale(2.6).setTint(0x2e9e4a);
       s.body.setSize(36, 32).setOffset(2, 6); s.recarga = 2000; s.ativado = false;
@@ -514,6 +630,61 @@ class Fase extends Phaser.Scene {
     s.velocidade *= this.dif.vel;
     if (s.body.velocity.x) s.setVelocityX(Math.sign(s.body.velocity.x) * s.velocidade);
     return s;
+  }
+
+  // ---- Rainha Gosma: voa de um lado para o outro, chove gosma, bota ovos e dá rasantes
+  pensarRainha(s, delta, alvo) {
+    if (!s.ativado) {
+      if (alvo && alvo.d < 520) { s.ativado = true; SOM.tocar('chefe'); SOM.musica('chefe'); this.texto(s.x, s.y - 90, 'A RAINHA GOSMA ACORDOU!', '#ff5d73'); this.cameras.main.shake(300, 0.01); }
+      s.setVelocity(0, 0); return;
+    }
+    s.relogio += delta;
+    const raiva = s.vida < s.vidaMax / 2;
+    if (s.estado === 'flutuar') {
+      const centro = this.mapaW / 2, amp = this.mapaW / 2 - 140;
+      const alvoX = centro + Math.sin(s.relogio / (raiva ? 1300 : 1800)) * amp;
+      s.setVelocity((alvoX - s.x) * 2, (s.casaY + Math.sin(s.relogio / 400) * 20 - s.y) * 3);
+      s.setFlipX(s.body.velocity.x < 0);
+      s.recarga -= delta;
+      if (s.recarga <= 0 && alvo) {
+        s.recarga = raiva ? 1800 : 2600;
+        const r = Math.random();
+        if (r < 0.4) { // chuva de gosma
+          for (let i = -2; i <= 2; i++) this.time.delayedCall((i + 2) * 120, () => s.active && this.cuspir(s, { x: s.x + i * 70, y: s.y + 300 }, 260));
+        } else if (r < 0.65 && this.inimigos.countActive() < 8) { // ovos que viram gosmentos
+          for (let i = 0; i < (raiva ? 3 : 2); i++) {
+            const f = this.criarInimigo(s.x + Phaser.Math.Between(-40, 40), s.y + 30, 'sombra');
+            f.vida = 2; f.setScale(0.75); this.texto(f.x, f.y, 'PLOP!', '#c77dff');
+          }
+          SOM.tocar('cuspe');
+        } else { // rasante: avisa piscando, depois mergulha onde o jogador estava
+          s.estado = 'aviso'; s.relogioEstado = 0; s.mira = { x: alvo.j.x, y: alvo.j.y };
+          s.setTint(0xff6b6b);
+        }
+      }
+    } else if (s.estado === 'aviso') {
+      s.setVelocity(0, 0); s.relogioEstado += delta;
+      s.setAlpha(Math.floor(s.relogioEstado / 100) % 2 ? 0.5 : 1);
+      if (s.relogioEstado > 700) {
+        s.estado = 'rasante'; s.relogioEstado = 0; s.setAlpha(1); s.clearTint();
+        const ang = Phaser.Math.Angle.Between(s.x, s.y, s.mira.x, s.mira.y);
+        s.setVelocity(Math.cos(ang) * 520, Math.sin(ang) * 520);
+        SOM.tocar('bote');
+      }
+    } else if (s.estado === 'rasante') {
+      s.relogioEstado += delta;
+      if (s.body.blocked.down || s.relogioEstado > 1500) {
+        if (s.body.blocked.down) { SOM.tocar('tremor'); this.cameras.main.shake(200, 0.01); }
+        s.estado = 'cansada'; s.relogioEstado = 0; s.setVelocity(0, 0);
+        this.texto(s.x, s.y - 60, 'Cansada! Ataquem!', '#ffe14d');
+      }
+    } else if (s.estado === 'cansada') { // parada perto do chão: hora do chinelo!
+      s.relogioEstado += delta; s.setVelocity(0, 0);
+      if (s.relogioEstado > (raiva ? 1500 : 2200)) { s.estado = 'voltar'; }
+    } else if (s.estado === 'voltar') {
+      s.setVelocity(0, -220);
+      if (s.y <= s.casaY) s.estado = 'flutuar';
+    }
   }
 
   maisPerto(x, y) {
@@ -539,6 +710,7 @@ SOM.tocar('cuspe');
       s.atordoado -= delta;
       if (s.empurrao > 0) s.empurrao -= delta; else s.setVelocityX(0);
       if (s.tipo === 'morcego') s.setVelocityY(s.body.blocked.down ? 0 : 200); // desmaiado cai
+      if (s.tipo === 'rainha') s.setVelocityY(0);
       if (s.zzz) s.zzz.setPosition(s.x, s.y - 40);
       if (s.atordoado <= 0) { s.setAngle(0); if (s.zzz) { s.zzz.destroy(); s.zzz = null; } }
       return;
@@ -592,9 +764,29 @@ SOM.tocar('cuspe');
         s.recarga = 1800; this.cuspir(s, alvo.j);
         this.tweens.add({ targets: s, scaleX: 1.2, scaleY: 0.8, duration: 100, yoyo: true });
       }
+    } else if (s.tipo === 'saltador') {
+      // pula na direção do jogador; antes se agacha (aviso)
+      if (s.body.blocked.down) {
+        s.setVelocityX(0);
+        if (alvo) s.setFlipX(alvo.j.x < s.x);
+        s.recarga -= delta;
+        if (alvo && alvo.d < 420 && s.recarga <= 0 && !s.preparando) {
+          s.preparando = true; const alvoX = alvo.j.x;
+          s.setTint(0xffe0b0);
+          this.time.delayedCall(450, () => {
+            s.preparando = false; if (!s.active) return; s.clearTint();
+            s.recarga = Phaser.Math.Between(1300, 2200);
+            SOM.tocar('bote'); s.setVelocity(Phaser.Math.Clamp((alvoX - s.x) * 1.4, -300, 300), -620);
+          });
+        }
+      }
+      s.setTexture('saltador_' + (s.body.blocked.down ? 0 : 1));
+      return;
+    } else if (s.tipo === 'rainha') {
+      this.pensarRainha(s, delta, alvo);
     } else if (s.tipo === 'chefao') {
       if (!s.ativado) {
-        if (alvo && alvo.d < 500) { s.ativado = true; SOM.tocar('chefe'); SOM.musica('chefe'); this.texto(s.x, s.y - 90, 'O GOSMÃO ACORDOU!', '#ff5d73'); this.cameras.main.shake(300, 0.01); }
+        if (alvo && alvo.d < 500) { s.ativado = true; SOM.tocar('chefe'); SOM.musica('chefe'); this.texto(s.x, s.y - 90, 'O ' + this.fase.nomeChefe + ' ACORDOU!', '#ff5d73'); this.cameras.main.shake(300, 0.01); }
         return;
       }
       if (s.preparando) return;
@@ -640,7 +832,9 @@ SOM.tocar('cuspe');
     if (vivos.length) {
       // a câmera segue o primeiro jogador vivo; o outro acompanha
       this.alvoCamera.x = vivos[0].x;
-      this.alvoCamera.y = vivos[0].y;
+      // na luta contra a Rainha (que voa), a câmera olha mais para cima
+      const olharCima = this.chefao && this.chefao.active && this.chefao.ativado && this.chefao.tipo === 'rainha' ? 110 : 0;
+      this.alvoCamera.y = vivos[0].y - olharCima;
     }
     // co-op: quem ficar fora da tela por 1,5 s é trazido para perto do parceiro
     if (vivos.length > 1) {
@@ -658,11 +852,11 @@ SOM.tocar('cuspe');
     }
 
     // caiu no buraco
-    this.jogadores.forEach(j => { if (!j.caido && j.y > MAPA_H + 60) this.cair(j); });
+    this.jogadores.forEach(j => { if (!j.caido && j.y > this.mapaH + 60) this.cair(j); });
 
     this.hud.setText(this.jogadores.map(j =>
       `${CHARS[j.id].nome}: ${j.caido ? '💫 voltando...' : '❤'.repeat(Math.max(0, j.vida)) + '♡'.repeat(Math.max(0, j.vidaMax - j.vida)) + '  🩴' + ARMAS[j.arma].icone}`
-    ).join('     ') + (this.chefao.active && this.chefao.ativado ? `     GOSMÃO: ${'█'.repeat(Math.ceil(this.chefao.vida / 3))}` : ''));
+    ).join('     ') + (this.chefao.active && this.chefao.ativado ? `     ${this.fase.nomeChefe}: ${'█'.repeat(Math.max(0, Math.ceil(this.chefao.vida / 3)))}` : ''));
   }
 
   controlarJogador(j, delta) {
@@ -860,7 +1054,7 @@ SOM.tocar('cuspe');
     if (!s.active) return;
     s.vida -= 0.5;
     s.setTint(0x6bd1ff); this.time.delayedCall(80, () => s.active && s.clearTint());
-    if (s.tipo !== 'chefao') { s.setVelocityX(260 * d); if (!(s.atordoado > 0)) { s.atordoado = 220; s.empurrao = 220; } }
+    if (!s.chefe) { s.setVelocityX(260 * d); if (!(s.atordoado > 0)) { s.atordoado = 220; s.empurrao = 220; } }
     if (s.vida <= 0) this.confete(s);
   }
 
@@ -891,7 +1085,8 @@ SOM.tocar('cuspe');
     s.vida -= dano; if (s.vida > 0) SOM.tocar('acerto');
     s.setTint(0xffffff);
     this.time.delayedCall(80, () => s.active && s.clearTint());
-    if (s.tipo === 'chefao') { s.setVelocityX(80 * dir); }
+    if (s.tipo === 'rainha') { /* não é empurrada */ }
+    else if (s.chefe) { s.setVelocityX(80 * dir); }
     else if (s.tipo === 'morcego') { s.setVelocity(220 * dir, -120); s.estado = 'voando'; s.relogio = 0; }
     else { s.setVelocity(200 * dir, -180); this.time.delayedCall(250, () => s.active && s.setVelocityX(s.velocidade * dir)); }
     if (s.vida <= 0) this.confete(s);
@@ -907,7 +1102,7 @@ SOM.tocar('cuspe');
   }
 
   escorregar(s, b) {
-    if (!b.active || !s.active || s.atordoado > 0 || s.tipo === 'chefao' || s.tipo === 'morcego' || s.vitima) return;
+    if (!b.active || !s.active || s.atordoado > 0 || s.chefe || s.tipo === 'morcego' || s.tipo === 'rainha' || s.vitima) return;
     const dir = s.x >= b.dono.x ? 1 : -1; // voa para LONGE do Nícolas
     s.setVelocity(420 * dir, -520);
     s.atordoado = 2200; s.empurrao = 900;
@@ -933,7 +1128,7 @@ SOM.tocar('cuspe');
     this.inimigos.getChildren().slice().forEach(s => {
       if (!s.active || Phaser.Math.Distance.Between(s.x, s.y, j.x, j.y) > 200) return;
       if (s.vitima) this.soltar(s.vitima, true);
-      if (s.tipo === 'chefao') { s.atordoado = 1200; s.empurrao = 0; }
+      if (s.chefe) { s.atordoado = 1200; s.empurrao = 0; }
       else { s.atordoado = 3500; s.empurrao = 0; s.setAngle(90); }
       this.desmaiar(s, 1);
     });
@@ -1028,14 +1223,14 @@ SOM.tocar('cuspe');
     pingos.explode(14);
     this.time.delayedCall(800, () => pingos.destroy());
     SOM.tocar('splort');
-    this.texto(x, base - 50, s.tipo === 'chefao' ? 'GOSMÃO DERRETEU!' : 'SPLORT!', '#7dff95');
+    this.texto(x, base - 50, s.chefe ? this.fase.nomeChefe + ' DERRETEU!' : 'SPLORT!', '#7dff95');
   }
 
 
   levarDano(j, s, semPisao) {
     if (j.invencivel > 0 || j.caido) return;
-    if (!semPisao && s.atordoado > 0 && s.tipo !== 'chefao') return; // tonto/desmaiado não machuca
-    if (!semPisao && s.tipo !== 'chefao' && j.body.velocity.y > 100 && j.y < s.y - 15) { // pulou em cima
+    if (!semPisao && s.atordoado > 0 && !s.chefe) return; // tonto/desmaiado não machuca
+    if (!semPisao && !s.chefe && j.body.velocity.y > 100 && j.y < s.y - 15) { // pulou em cima
       j.setVelocityY(-400); this.acertar(s, 1, j.direcao); return;
     }
     if (!semPisao && (s.tipo === 'comedor' || s.tipo === 'agarrador') && !s.vitima && !(s.atordoado > 0) && !j.preso) {
@@ -1074,8 +1269,18 @@ SOM.tocar('cuspe');
     this.acabou = true;
     this.physics.pause();
     SOM.pararMusica(); SOM.tocar('vitoria');
-    this.mensagem('FASE CONCLUÍDA!\nAperte R ou toque na tela para jogar de novo', '#7cff6b');
-    this.esperarRecomeco();
+    const cfg = this.registry.get('config');
+    const proximo = this.nivel + 1;
+    try { if (proximo > (+localStorage.getItem('cdm_mundo') || 0)) localStorage.setItem('cdm_mundo', Math.min(proximo, FASES.length - 1)); } catch (e) {}
+    if (proximo < FASES.length) {
+      this.mensagem(this.fase.nome.split(':')[0].toUpperCase() + ' COMPLETO!\nAperte R ou toque na tela para ir ao ' + FASES[proximo].nome.split(':')[0], '#7cff6b');
+      cfg.nivel = proximo; this.registry.set('config', cfg);
+      this.esperarRecomeco();
+    } else {
+      this.mensagem('VOCÊS VENCERAM OS GOSMENTOS!\nNícolas e Theo salvaram o Coração de Marte!\nToque ou aperte R para voltar ao menu', '#ffe14d');
+      this.input.keyboard.once('keydown-R', () => this.scene.start('Menu'));
+      this.time.delayedCall(800, () => this.input.once('pointerdown', () => this.scene.start('Menu')));
+    }
   }
 
   esperarRecomeco() {

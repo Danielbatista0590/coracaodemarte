@@ -95,6 +95,43 @@ for q in range(2):
     fr.append(txt(contorno(g)))
 R['agarrador'] = {'pal': {'g': 0x2fa88a, 'G': 0x1f7a63, 'o': 0x0d3a2e, 't': 0x46c9a6, 'p': 0xff6bd5, 'k': 0x111111, 'l': 0xb5ffe9, 'w': 0xffffff}, 'frames': fr}
 
+
+# saltador (sapo alienígena) — quadro 0 agachado, quadro 1 esticado
+fr = []
+for q in range(2):
+    g = grade(22, 20)
+    if q == 0:
+        elipse(g, 11, 14, 10, 6, 'g'); ret(g, 1, 17, 5, 19, 'G'); ret(g, 16, 17, 20, 19, 'G')
+    else:
+        elipse(g, 11, 11, 8, 8, 'g'); ret(g, 3, 16, 6, 19, 'G'); ret(g, 15, 16, 18, 19, 'G')
+    sombrear(g, 15)
+    ey = 8 if q == 0 else 5
+    elipse(g, 6, ey + 1, 3, 3, 'g'); elipse(g, 16, ey + 1, 3, 3, 'g')
+    olho(g, 5, ey); olho(g, 15, ey)
+    ret(g, 7, ey + 6, 14, ey + 6, 'm')
+    fr.append(txt(contorno(g)))
+R['saltador'] = {'pal': {'g': 0xffa63d, 'G': 0xd9761f, 'o': 0x5e2a08, 'm': 0x5e2a08, 'w': 0xffffff, 'k': 0x111111}, 'frames': fr}
+
+# Rainha Gosma (chefe do Mundo 2): água-viva gigante com coroa
+fr = []
+for q in range(2):
+    g = grade(40, 32)
+    elipse(g, 20, 16, 18, 12, 'g', so_cima=True); ret(g, 2, 15, 37, 16, 'g')
+    olho(g, 13, 9, grande=True); olho(g, 25, 9, grande=True)
+    ret(g, 16, 13, 23, 13, 'm'); px(g, 15, 12, 'm'); px(g, 24, 12, 'm')
+    px(g, 8, 8, 'l'); px(g, 9, 7, 'l'); px(g, 10, 6, 'l')
+    g = contorno(g)
+    for i, x in enumerate(range(5, 36, 5)):
+        for y in range(17, 31):
+            o = (y // 2 + i + q) % 2
+            px(g, x + o, y, 'G'); px(g, x + 1 + o, y, 'G'); px(g, x + 2 + o, y, 'o')
+    for x in range(13, 28): px(g, x, 4, 'c')
+    for x in (13, 17, 20, 23, 27):
+        px(g, x, 3, 'c'); px(g, x, 2, 'c')
+    px(g, 20, 1, 'r'); px(g, 17, 1, 'r'); px(g, 23, 1, 'r')
+    fr.append(txt(g))
+R['rainha'] = {'pal': {'g': 0xc77dff, 'G': 0x9a4fd6, 'o': 0x3a1260, 'c': 0xffd23f, 'r': 0xff3b6b, 'w': 0xffffff, 'k': 0x111111, 'y': 0xfff36b, 'm': 0x3a1260, 'l': 0xf0d9ff}, 'frames': fr}
+
 print('// pixel art dos alienígenas (gerado por tools/inimigos.py). "." = transparente')
 print('const INIMIGOS_PIXEL = {')
 for k, v in R.items():
