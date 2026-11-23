@@ -57,9 +57,54 @@ const MAPA = [
 const MAPA_W = MAPA[0].length * T, MAPA_H = MAPA.length * T;
 const TIPOS = { g: 'sombra', v: 'morcego', c: 'cuspidor', m: 'comedor', a: 'agarrador', b: 'chefao' };
 
+// ---- personagens em pixel art (16x24, desenhado em dobro)
+// h cabelo  s pele  d pele sombra  e olho  m boca  w camiseta  W camiseta sombra  j calça  J calça sombra  k tênis  o sola
+const PIXEL_CORPO = [
+  '....hhhhhhh.....',
+  '...hhhhhhhhh....',
+  '...hhhhhhhhhh...',
+  '...hhsssssshh...',
+  '...hssssesse....',
+  '...dssssssss....',
+  '....ssssmms.....',
+  '.....ssssss.....',
+  '......dsd.......',
+  '....wwwwwwww....',
+  '...wwwwwwwwww...',
+  '..wwWwwwwwwWww..',
+  '..sWwwwwwwwwWs..',
+  '..s.wwwwwwww.s..',
+  '..d.wwwwwwww.d..',
+  '....wwwwwwww....',
+  '....jjjjjjjj....',
+  '....jjjjJjjj....',
+];
+const PIXEL_PERNAS = {
+  parado: [
+    '....jjj..jjj....',
+    '....jjj..jjj....',
+    '....jjJ..jJj....',
+    '....jjj..jjj....',
+    '...kkkk..kkkk...',
+    '...oooo..oooo...',
+  ],
+  andando: [
+    '...jjj....jjj...',
+    '...jjj....jjj...',
+    '..jjJ......jJj..',
+    '..jjj......jjj..',
+    '.kkkk......kkkk.',
+    '.oooo......oooo.',
+  ],
+};
+
 const CHARS = {
-  nicolas: { nome: 'Nícolas', cor: 0x3fa9f5, habilidade: 'Casca de banana' },
-  theo:    { nome: 'Theo',    cor: 0xff9f1c, habilidade: 'Mega pum' },
+  // Nick: camiseta clara, calça jeans, tênis escuro de sola branca
+  nicolas: { nome: 'Nícolas', habilidade: 'Casca de banana',
+    paleta: { h: 0x2b1d14, s: 0xc58c5c, d: 0xa8714a, e: 0x1a1a1a, m: 0x7a3b2a, w: 0xe9e9ee, W: 0xc4c4cf, j: 0x7fa6cf, J: 0x5f86b0, k: 0x2a2a2a, o: 0xf2f2f2 } },
+  // Theo: provisório até chegar a foto dele
+  theo:    { nome: 'Theo', habilidade: 'Mega pum',
+    paleta: { h: 0x5a3a1e, s: 0xe8b98c, d: 0xc99a6e, e: 0x1a1a1a, m: 0x8a3b2a, w: 0xff9f1c, W: 0xd97f0c, j: 0x3b4a6b, J: 0x2b3650, k: 0xc0392b, o: 0xf2f2f2 } },
 };
 
 const CONTROLES = [
@@ -310,10 +355,12 @@ class Fase extends Phaser.Scene {
      .fillStyle(0x6b4a1f).fillCircle(14, 6, 2); g.generateTexture('banana', 28, 16).clear();
     g.fillStyle(0x7dff95).fillEllipse(30, 8, 60, 16); g.generateTexture('poca', 60, 16).clear();
     Object.entries(CHARS).forEach(([id, c]) => {
-      g.fillStyle(c.cor).fillRoundedRect(4, 14, 24, 30, 6);     // corpo
-      g.fillStyle(0xf2c9a0).fillCircle(16, 10, 10);              // cabeça
-      g.fillStyle(0x000000).fillCircle(20, 9, 2);                // olho
-      g.generateTexture(id, 32, 46).clear();
+      ['parado', 'andando'].forEach(pose => {
+        [...PIXEL_CORPO, ...PIXEL_PERNAS[pose]].forEach((linha, y) => [...linha].forEach((ch, x) => {
+          if (c.paleta[ch] !== undefined) g.fillStyle(c.paleta[ch]).fillRect(x * 2, y * 2, 2, 2);
+        }));
+        g.generateTexture(pose === 'parado' ? id : id + '_andando', 32, 48).clear();
+      });
     });
     g.fillStyle(0xff5d73).fillRoundedRect(0, 0, 26, 10, 4); g.generateTexture('chinelo', 26, 10).clear();
     g.destroy();
@@ -322,7 +369,7 @@ class Fase extends Phaser.Scene {
   criarJogador(id, idx, x, y) {
     const j = this.physics.add.sprite(x, y, id);
     j.setCollideWorldBounds(true);
-    j.body.setSize(24, 44).setOffset(4, 2);
+    j.body.setSize(20, 46).setOffset(6, 2);
     const c = CONTROLES[idx];
     const k = this.input.keyboard.addKeys(c);
     Object.assign(j, {
@@ -587,6 +634,9 @@ class Fase extends Phaser.Scene {
       else j.setVelocityX(0);
     }
     j.setFlipX(j.direcao < 0);
+    // animação: alterna as pernas enquanto anda; no ar fica de pernas abertas
+    const andandoAgora = noChao ? Math.abs(j.body.velocity.x) > 10 && Math.floor(this.time.now / 140) % 2 === 0 : true;
+    j.setTexture(andandoAgora ? j.id + '_andando' : j.id);
 
     if (pulo2) {
       if (noChao) j.setVelocityY(-560);
