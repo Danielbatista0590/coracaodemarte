@@ -5,7 +5,7 @@ const W = 960, H = 540, T = 32; // T = tamanho do bloco do mapa
 
 // Mapa da fase (gerado por tools/mapa.py). Legenda:
 // # bloco  - plataforma atravessável  H escada  P início  E saída  B chefe
-// g gosmento  v água-viva  c cuspidor  m comedor  a agarrador  (MAIÚSCULAS: só no "Quero a minha mãe!")
+// T baú com arma  g gosmento  v água-viva  c cuspidor  m comedor  a agarrador  (MAIÚSCULAS: só no "Quero a minha mãe!")
 const MAPA = [
   '####################################################################################################',
   '#                                                                                                  #',
@@ -22,15 +22,15 @@ const MAPA = [
   '#                                    v                           #         B                       #',
   '#                                                                #                               E #',
   '#                                                                 ##################-------#########',
-  '#                                    C                                                             #',
+  '#                                  T C                                                             #',
   '#                                 -------                                                          #',
   '#                                                                                    -------       #',
   '#                                                                                                  #',
-  '#                     H       g         a       A c                                                #',
+  '#                     H       g         a       A c                                            T   #',
   '#                 ###-H-###################################                                ------- #',
   '#                     H                                                                            #',
   '#                     H                                                                            #',
-  '#             ------  H                                                             -------        #',
+  '#             ------  H     T                                                       -------        #',
   '#                     H   -------                                                                  #',
   '#                     H                                                                            #',
   '#        -------      H                                                         v           -------#',
@@ -38,7 +38,7 @@ const MAPA = [
   '#                     H                                                                            #',
   '# -------             H                                                                  -------   #',
   '#           v         H                          c                                                 #',
-  '#                     H                       ---------           H     g             c            #',
+  '#                     H                       ---------           H   T g             c            #',
   '#         -------     H                                         #-H-#####################          #',
   '#                     H                 G                         H                                #',
   '#                     H         ---------                         H                                #',
@@ -50,7 +50,7 @@ const MAPA = [
   '#                     H       ---------                           H                                #',
   '#   -------           H                                           H                                #',
   '#  P                  H                                           H                                #',
-  '#       G     g       H            g         m         g    M     H        a         g      m  G   #',
+  '#       G     g  T    H            g         m         g    M  T  H        a         g      m  G   #',
   '####################################################################################################',
 ];
 
@@ -107,9 +107,17 @@ const CHARS = {
     paleta: { h: 0x2e2118, s: 0xc9956a, d: 0xad7b52, e: 0x1a1a1a, m: 0x7a3b2a, w: 0xcbb89a, W: 0xa8957a, j: 0x1e1e22, J: 0x34343a, k: 0x151518, o: 0xf2f2f2 } },
 };
 
+// armas do botão 2 (o botão 1 é sempre o chinelo)
+const ARMAS = {
+  estilingue: { nome: 'Estilingue', icone: '🎯', recarga: 450 },
+  bola:       { nome: 'Bola de futebol', icone: '⚽', recarga: 700 },
+  drone:      { nome: 'Drone de purpurina', icone: '🚁', recarga: 1600 },
+  agua:       { nome: "Pistola d'água", icone: '💦', recarga: 550 },
+};
+
 const CONTROLES = [
-  { esq: 'A', dir: 'D', pulo: 'W', baixo: 'S', chinelo: 'F', estilingue: 'G', especial: 'H', texto: 'A/D andar · W pular/subir · S descer · F chinelo · G estilingue · H especial' },
-  { esq: 'LEFT', dir: 'RIGHT', pulo: 'UP', baixo: 'DOWN', chinelo: 'K', estilingue: 'L', especial: 'J', texto: 'Setas andar/pular/subir/descer · K chinelo · L estilingue · J especial' },
+  { esq: 'A', dir: 'D', pulo: 'W', baixo: 'S', chinelo: 'F', estilingue: 'G', especial: 'H', texto: 'A/D andar · W pular/subir · S descer · F chinelo · G arma · H especial' },
+  { esq: 'LEFT', dir: 'RIGHT', pulo: 'UP', baixo: 'DOWN', chinelo: 'K', estilingue: 'L', especial: 'J', texto: 'Setas andar/pular/subir/descer · K chinelo · L arma · J especial' },
 ];
 
 // ---------------------------------------------------------------- MENU
@@ -223,6 +231,14 @@ class Fase extends Phaser.Scene {
     this.physics.add.existing(this.chegada, true);
     this.add.text(ex.x, ex.y - 140, 'SAÍDA', { fontFamily: 'Arial Black', fontSize: 20, color: '#7cff6b' }).setOrigin(0.5);
 
+    // baús
+    this.baus = this.physics.add.staticGroup();
+    this.itens = this.physics.add.group();
+    const sorteio = Phaser.Utils.Array.Shuffle(['bola', 'drone', 'agua', 'bola', 'drone', 'agua']);
+    pecas.filter(p => p.ch === 'T').forEach((p, i) => {
+      const b = this.baus.create(p.x, p.y - 14, 'bau'); b.arma = sorteio[i % sorteio.length];
+    });
+
     // inimigos — Molezinha: pula 1 a cada 3. Quero a minha mãe!: inclui os MAIÚSCULOS
     this.inimigos = this.physics.add.group();
     let n = 0;
@@ -240,8 +256,23 @@ class Fase extends Phaser.Scene {
 
     // projéteis
     this.pedras = this.physics.add.group({ allowGravity: false });
+    this.bolas = this.physics.add.group();
+    this.bombas = this.physics.add.group();
+    this.gotas = this.physics.add.group({ allowGravity: false });
 
     this.physics.add.collider(this.jogadores, this.chao);
+    this.physics.add.collider(this.itens, this.chao);
+    this.physics.add.collider(this.itens, this.pontes);
+    this.physics.add.overlap(this.jogadores, this.baus, (j, b) => this.abrirBau(b));
+    this.physics.add.overlap(this.jogadores, this.itens, (j, it) => this.pegarArma(j, it));
+    this.physics.add.collider(this.bolas, this.chao);
+    this.physics.add.collider(this.bolas, this.pontes, null, (b, p) => b.body.velocity.y >= 0 && b.body.bottom <= p.body.top + 12);
+    this.physics.add.overlap(this.bolas, this.inimigos, (b, s) => this.bolaAcerta(b, s));
+    this.physics.add.collider(this.bombas, this.chao, (b) => this.explodir(b));
+    this.physics.add.collider(this.bombas, this.pontes, (b) => this.explodir(b));
+    this.physics.add.overlap(this.bombas, this.inimigos, (b) => this.explodir(b));
+    this.physics.add.overlap(this.gotas, this.inimigos, (g, s) => { if (!g.active) return; const d = g.body.velocity.x > 0 ? 1 : -1; g.destroy(); this.molhar(s, d); });
+    this.physics.add.collider(this.gotas, this.chao, (g) => g.destroy());
     this.physics.add.collider(this.inimigos, this.chao);
     // plataformas atravessáveis: só seguram quem vem de cima
     const deCima = (o, p) => o.body.velocity.y >= 0 && o.body.bottom <= p.body.top + 12;
@@ -282,9 +313,9 @@ class Fase extends Phaser.Scene {
     this.input.addPointer(4); // até 5 dedos ao mesmo tempo
     const botao = (x, y, r, rotulo, chave, segurar) => {
       const circ = this.add.circle(x, y, r, 0xffffff, 0.18).setStrokeStyle(3, 0xffffff, 0.5).setScrollFactor(0).setDepth(30);
-      this.add.text(x, y, rotulo, { fontFamily: 'Arial Black', fontSize: r * 0.55, color: '#ffffff' })
+      const tx = this.add.text(x, y, rotulo, { fontFamily: 'Arial Black', fontSize: r * 0.55, color: '#ffffff' })
         .setOrigin(0.5).setScrollFactor(0).setDepth(31).setAlpha(0.8);
-      this.botoes.push({ x, y, r: r * 1.25, chave, segurar, circ, antes: false });
+      this.botoes.push({ x, y, r: r * 1.25, chave, segurar, circ, rotulo: tx, antes: false });
     };
     botao(80, H - 80, 56, '◀', 'esq', true);
     botao(205, H - 80, 56, '▶', 'dir', true);
@@ -314,6 +345,7 @@ class Fase extends Phaser.Scene {
       else if (agora && !b.antes) this.toque[b.chave] = true; // acabou de apertar
       b.antes = agora;
       b.circ.setFillStyle(0xffffff, agora ? 0.4 : 0.18);
+      if (b.chave === 'estilingue' && this.jogadores[0]) b.rotulo.setText(ARMAS[this.jogadores[0].arma].icone);
     });
   }
 
@@ -351,6 +383,24 @@ class Fase extends Phaser.Scene {
      .fillStyle(0xff6bd5).fillCircle(17, 15, 4).fillCircle(31, 15, 4);
     g.generateTexture('agarrador', 48, 48).clear();
     g.fillStyle(0x9dff4a).fillCircle(7, 7, 7); g.generateTexture('gosma', 14, 14).clear();
+    g.fillStyle(0xffffff).fillCircle(9, 9, 9).fillStyle(0x222222).fillCircle(9, 9, 3).fillCircle(3, 6, 2).fillCircle(15, 6, 2).fillCircle(5, 14, 2).fillCircle(13, 14, 2);
+    g.generateTexture('bola', 18, 18).clear();
+    g.fillStyle(0x8892a0).fillRect(6, 8, 20, 8).fillStyle(0x5a6270).fillRect(0, 4, 12, 2).fillRect(20, 4, 12, 2).fillRect(5, 4, 2, 5).fillRect(25, 4, 2, 5)
+     .fillStyle(0xff3b3b).fillCircle(22, 12, 2);
+    g.generateTexture('drone', 32, 18).clear();
+    g.fillStyle(0xff6bd5).fillCircle(8, 8, 8).fillStyle(0xffffff).fillCircle(5, 5, 2).fillStyle(0xffef5d).fillRect(7, 0, 2, 3);
+    g.generateTexture('bomba', 16, 16).clear();
+    g.fillStyle(0x6bd1ff).fillCircle(4, 4, 4); g.generateTexture('gota', 8, 8).clear();
+    g.fillStyle(0x8a5a2b).fillRect(0, 8, 32, 20).fillStyle(0xa8723a).fillRect(0, 0, 32, 10).fillStyle(0xffd23f).fillRect(0, 9, 32, 3).fillRect(13, 6, 6, 10);
+    g.generateTexture('bau', 32, 28).clear();
+    g.fillStyle(0x8a5a2b).fillRect(0, 8, 32, 20).fillStyle(0xa8723a).fillRect(0, 0, 32, 5).fillStyle(0x2a1a0a).fillRect(2, 8, 28, 4).fillStyle(0xffd23f).fillRect(0, 12, 32, 2);
+    g.generateTexture('bau_aberto', 32, 28).clear();
+    // ícones das armas no chão (com aura)
+    const aura = () => g.fillStyle(0xffef5d, 0.35).fillCircle(14, 14, 14);
+    aura(); g.fillStyle(0x8a5a2b).fillRect(12, 12, 4, 12).fillRect(6, 6, 4, 8).fillRect(18, 6, 4, 8).fillStyle(0xd9d2c5).fillCircle(14, 8, 3); g.generateTexture('item_estilingue', 28, 28).clear();
+    aura(); g.fillStyle(0xffffff).fillCircle(14, 14, 8).fillStyle(0x222222).fillCircle(14, 14, 3); g.generateTexture('item_bola', 28, 28).clear();
+    aura(); g.fillStyle(0x8892a0).fillRect(6, 12, 16, 6).fillStyle(0x5a6270).fillRect(2, 9, 10, 2).fillRect(16, 9, 10, 2); g.generateTexture('item_drone', 28, 28).clear();
+    aura(); g.fillStyle(0x3fa9f5).fillRect(6, 10, 14, 6).fillRect(8, 14, 5, 8).fillStyle(0x6bd1ff).fillCircle(23, 13, 3); g.generateTexture('item_agua', 28, 28).clear();
     g.fillStyle(0xffe14d).fillEllipse(14, 10, 26, 10).fillTriangle(2, 10, 8, 2, 10, 10).fillTriangle(26, 10, 20, 2, 18, 10)
      .fillStyle(0x6b4a1f).fillCircle(14, 6, 2); g.generateTexture('banana', 28, 16).clear();
     g.fillStyle(0x7dff95).fillEllipse(30, 8, 60, 16); g.generateTexture('poca', 60, 16).clear();
@@ -374,7 +424,7 @@ class Fase extends Phaser.Scene {
     const k = this.input.keyboard.addKeys(c);
     Object.assign(j, {
       id, idx, k, vida: this.dif.vidaJog, vidaMax: this.dif.vidaJog, direcao: 1, pulosExtras: 0,
-      invencivel: 0, recargaChinelo: 0, recargaEstilingue: 0, recargaEspecial: 0, deslizando: 0, caido: false,
+      arma: 'estilingue', invencivel: 0, recargaChinelo: 0, recargaEstilingue: 0, recargaEspecial: 0, deslizando: 0, caido: false,
     });
     return j;
   }
@@ -521,6 +571,7 @@ class Fase extends Phaser.Scene {
     vivos.forEach(j => this.controlarJogador(j, delta));
 
     this.inimigos.getChildren().slice().forEach(s => s.active && this.pensarInimigo(s, delta));
+    this.itens.getChildren().forEach(it => { if (it.bloqueado && !this.physics.overlap(it.bloqueado, it)) it.bloqueado = null; });
 
     // câmera
     if (vivos.length) {
@@ -547,7 +598,7 @@ class Fase extends Phaser.Scene {
     this.jogadores.forEach(j => { if (!j.caido && j.y > MAPA_H + 60) this.cair(j); });
 
     this.hud.setText(this.jogadores.map(j =>
-      `${CHARS[j.id].nome}: ${j.caido ? '💫 voltando...' : '❤'.repeat(j.vida) + '♡'.repeat(j.vidaMax - j.vida)}`
+      `${CHARS[j.id].nome}: ${j.caido ? '💫 voltando...' : '❤'.repeat(Math.max(0, j.vida)) + '♡'.repeat(Math.max(0, j.vidaMax - j.vida)) + '  🩴' + ARMAS[j.arma].icone}`
     ).join('     ') + (this.chefao.active && this.chefao.ativado ? `     GOSMÃO: ${'█'.repeat(Math.ceil(this.chefao.vida / 3))}` : ''));
   }
 
@@ -597,7 +648,7 @@ class Fase extends Phaser.Scene {
       j.setFlipX(j.direcao < 0);
       if (pulo2 && (esq || dir)) { j.escalando = false; j.body.setAllowGravity(true); j.setVelocityY(-450); }
       if (chinelo2 && j.recargaChinelo === 0) this.chinelada(j);
-      if (estilingue2 && j.recargaEstilingue === 0) this.atirar(j);
+      if (estilingue2 && j.recargaEstilingue === 0) this.usarArma(j);
       return;
     }
     // descer de plataforma atravessável: ▼ + pular, ou só ▼
@@ -650,7 +701,7 @@ class Fase extends Phaser.Scene {
     }
 
     if (chinelo2 && j.recargaChinelo === 0) this.chinelada(j);
-    if (estilingue2 && j.recargaEstilingue === 0) this.atirar(j);
+    if (estilingue2 && j.recargaEstilingue === 0) this.usarArma(j);
   }
 
   chinelada(j) {
@@ -667,12 +718,103 @@ class Fase extends Phaser.Scene {
     });
   }
 
+  // ---- armas do botão 2
+  usarArma(j) {
+    j.recargaEstilingue = ARMAS[j.arma].recarga;
+    if (j.arma === 'estilingue') this.atirar(j);
+    else if (j.arma === 'bola') this.chutarBola(j);
+    else if (j.arma === 'drone') this.lancarDrone(j);
+    else if (j.arma === 'agua') this.esguichar(j);
+  }
+
   atirar(j) {
-    j.recargaEstilingue = 450;
     const p = this.pedras.create(j.x + 16 * j.direcao, j.y - 6, 'pedra');
     p.setVelocityX(650 * j.direcao);
     this.time.delayedCall(900, () => p.active && p.destroy());
   }
+
+  // bola: quica no chão e nas paredes, acerta vários inimigos
+  chutarBola(j) {
+    const b = this.bolas.create(j.x + 18 * j.direcao, j.y + 4, 'bola');
+    b.setCircle(9).setBounce(0.75, 0.75).setCollideWorldBounds(true).setVelocity(520 * j.direcao, -260).setAngularVelocity(600 * j.direcao);
+    b.acertados = new Set();
+    this.time.delayedCall(2600, () => { if (b.active) { this.poeira(b.x, b.y); b.destroy(); } });
+  }
+  bolaAcerta(b, s) {
+    if (!b.active || !s.active || b.acertados.has(s)) return;
+    b.acertados.add(s);
+    this.acertar(s, 2, b.body.velocity.x >= 0 ? 1 : -1);
+    b.setVelocity(-b.body.velocity.x * 0.8, -300);
+    this.texto(b.x, b.y - 20, 'GOL!', '#ffffff');
+  }
+
+  // drone: voa para frente e solta uma bomba de purpurina
+  lancarDrone(j) {
+    const d = this.add.image(j.x, j.y - 30, 'drone').setDepth(8).setFlipX(j.direcao < 0);
+    this.tweens.add({ targets: d, x: j.x + 170 * j.direcao, y: j.y - 110, duration: 550, ease: 'Sine.easeOut', onComplete: () => {
+      const b = this.bombas.create(d.x, d.y + 10, 'bomba');
+      b.setVelocity(0, 50);
+      this.time.delayedCall(2000, () => b.active && this.explodir(b));
+      this.tweens.add({ targets: d, y: d.y - 200, alpha: 0, duration: 600, onComplete: () => d.destroy() });
+    } });
+  }
+  explodir(b) {
+    if (!b.active) return;
+    const x = b.x, y = b.y; b.destroy();
+    const brilho = this.add.particles(x, y, 'confete', {
+      speed: { min: 80, max: 300 }, lifespan: 900, gravityY: 300, scale: { start: 1.2, end: 0 },
+      tint: [0xff6bd5, 0xffef5d, 0x6bd1ff, 0xc77dff, 0xffffff], emitting: false,
+    });
+    brilho.explode(60); this.time.delayedCall(1000, () => brilho.destroy());
+    const onda = this.add.circle(x, y, 20, 0xff6bd5, 0.4);
+    this.tweens.add({ targets: onda, radius: 100, alpha: 0, duration: 350, onComplete: () => onda.destroy() });
+    this.cameras.main.shake(150, 0.006);
+    this.texto(x, y - 30, 'PURPURINA!', '#ff6bd5');
+    this.inimigos.getChildren().slice().forEach(s => {
+      if (s.active && Phaser.Math.Distance.Between(s.x, s.y, x, y) < 100) this.acertar(s, 3, s.x >= x ? 1 : -1);
+    });
+  }
+
+  // pistola d'água: rajada de gotas que empurra
+  esguichar(j) {
+    for (let i = 0; i < 6; i++) {
+      this.time.delayedCall(i * 55, () => {
+        if (j.caido) return;
+        const g = this.gotas.create(j.x + 16 * j.direcao, j.y - 4 + Phaser.Math.Between(-4, 4), 'gota');
+        g.setVelocity(560 * j.direcao, Phaser.Math.Between(-30, 30));
+        this.time.delayedCall(550, () => g.active && g.destroy());
+      });
+    }
+  }
+  molhar(s, d) {
+    if (!s.active) return;
+    s.vida -= 0.5;
+    s.setTint(0x6bd1ff); this.time.delayedCall(80, () => s.active && s.clearTint());
+    if (s.tipo !== 'chefao') { s.setVelocityX(260 * d); if (!(s.atordoado > 0)) { s.atordoado = 220; s.empurrao = 220; } }
+    if (s.vida <= 0) this.confete(s);
+  }
+
+  // ---- baús e troca de arma
+  abrirBau(b) {
+    if (b.aberto) return;
+    b.aberto = true; b.setTexture('bau_aberto');
+    this.texto(b.x, b.y - 30, ARMAS[b.arma].nome + '!', '#ffe14d');
+    this.soltarItem(b.x, b.y - 20, b.arma);
+  }
+  soltarItem(x, y, arma, largadoPor) {
+    const it = this.itens.create(x, y, 'item_' + arma);
+    it.bloqueado = largadoPor || null; // quem largou só pega de novo depois de sair de cima
+    it.arma = arma; it.espera = this.time.now + 700; it.setVelocityY(-250);
+    this.tweens.add({ targets: it, scale: 1.15, duration: 400, yoyo: true, repeat: -1 });
+  }
+  pegarArma(j, it) {
+    if (!it.active || this.time.now < it.espera || j.caido || it.bloqueado === j) return;
+    const velha = j.arma;
+    j.arma = it.arma; it.destroy();
+    this.texto(j.x, j.y - 40, ARMAS[j.arma].icone + ' ' + ARMAS[j.arma].nome, '#ffffff');
+    if (velha !== j.arma) this.soltarItem(j.x - 20 * j.direcao, j.y - 10, velha, j); // larga a antiga no chão
+  }
+
 
   acertar(s, dano, dir) {
     if (!s.active) return;

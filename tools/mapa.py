@@ -1,7 +1,7 @@
 # Gera o mapa da fase 1 em texto. Legenda:
 # # bloco sólido   - plataforma atravessável (sobe por baixo, desce com ▼)   H escada
 # P início  E saída  B chefe   g gosmento  v água-viva  c cuspidor  m comedor  a agarrador
-# MAIÚSCULAS = inimigos extras só no "Quero a minha mãe!"
+# T baú com arma   MAIÚSCULAS = inimigos extras só no "Quero a minha mãe!"
 C, R = 100, 45
 g = [[' '] * C for _ in range(R)]
 def solid(x1, x2, y):
@@ -33,6 +33,7 @@ for (x, y, ch) in [(14,43,'g'),(12,30,'v'),(30,19,'g'),(40,19,'a'),(50,19,'c'),(
                    (75,43,'a'),(85,43,'g'),(92,43,'m'),(72,31,'g'),(80,26,'v'),(86,31,'c'),
                    (8,43,'G'),(50,10,'V'),(37,15,'C'),(60,43,'M'),(48,19,'A'),(95,43,'G'),(40,33,'G')]:
     put(x, y, ch)
+for (x, y) in [(17,43),(35,15),(28,23),(70,31),(95,19),(63,43)]: put(x, y, 'T')
 print('const MAPA = [')
 for row in g: print("  '" + ''.join(row) + "',")
 print('];')
