@@ -546,6 +546,8 @@ class Fase extends Phaser.Scene {
     if (j.escalando) {
       j.setVelocityY(cima ? -200 : baixo ? 200 : 0);
       j.setVelocityX(esq ? -100 : dir ? 100 : 0);
+      if (esq) j.direcao = -1; else if (dir) j.direcao = 1; // virar na escada para mirar
+      j.setFlipX(j.direcao < 0);
       if (pulo2 && (esq || dir)) { j.escalando = false; j.body.setAllowGravity(true); j.setVelocityY(-450); }
       if (chinelo2 && j.recargaChinelo === 0) this.chinelada(j);
       if (estilingue2 && j.recargaEstilingue === 0) this.atirar(j);
