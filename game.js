@@ -375,6 +375,12 @@ class Fase extends Phaser.Scene {
     });
 
     this.chefao = null;
+    // hologramas com dicas espalhados pela fase
+    this.dicas = (this.fase.dicas || []).map(d => {
+      const h = this.add.image(d.c * T + T / 2, (d.r + 1) * T - 24, 'holo_' + d.quem).setAlpha(0.7).setDepth(-1);
+      this.tweens.add({ targets: h, alpha: 0.35, duration: 120, yoyo: true, repeat: -1, repeatDelay: Phaser.Math.Between(1200, 2400) });
+      return Object.assign({ img: h, visto: false }, d);
+    });
     // inimigos — Molezinha: pula 1 a cada 3. Quero a minha mãe!: inclui os MAIÚSCULOS
     this.inimigos = this.physics.add.group();
     let n = 0;
@@ -448,6 +454,21 @@ class Fase extends Phaser.Scene {
   }
 
   // botões na tela para celular/tablet (controlam o Jogador 1)
+  mostrarDica(d) {
+    SOM.tocar('holograma');
+    if (this.painelDica) this.painelDica.destroy();
+    const f = FAMILIA[d.quem];
+    const c = this.add.container(W / 2, 92).setScrollFactor(0).setDepth(45);
+    const fundo = this.add.rectangle(0, 0, 700, 78, 0x06121f, 0.88).setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(f.cor).color);
+    const rosto = this.add.image(-310, 0, 'holo_' + d.quem).setScale(1.3).setAlpha(0.9);
+    const nome = this.add.text(-270, -30, f.nome + ' (holograma):', { fontFamily: 'Arial Black', fontSize: 15, color: f.cor });
+    const t = this.add.text(-270, -8, d.texto, { fontFamily: 'Arial', fontSize: 16, color: '#ffffff', wordWrap: { width: 600 } });
+    c.add([fundo, rosto, nome, t]);
+    this.painelDica = c;
+    d.img.destroy();
+    this.time.delayedCall(Math.max(4500, d.texto.length * 75), () => { if (this.painelDica === c) { this.tweens.add({ targets: c, alpha: 0, duration: 400, onComplete: () => c.destroy() }); this.painelDica = null; } });
+  }
+
   mostrarTitulo() {
     const t = this.add.text(W / 2, 120, this.fase.nome, { fontFamily: 'Arial Black', fontSize: 34, color: '#ffffff', stroke: '#000', strokeThickness: 6 })
       .setOrigin(0.5).setScrollFactor(0).setDepth(40);
@@ -602,8 +623,8 @@ class Fase extends Phaser.Scene {
     const c = CONTROLES[idx];
     const k = this.input.keyboard.addKeys(c);
     Object.assign(j, {
-      id, idx, k, vida: this.dif.vidaJog, vidaMax: this.dif.vidaJog, direcao: 1, pulosExtras: 0,
-      arma: 'estilingue', invencivel: 0, recargaChinelo: 0, recargaEstilingue: 0, recargaEspecial: 0, deslizando: 0, caido: false,
+      id, idx, k, vida: this.dif.vidaJog + PROGRESSO.nivel('coracao'), vidaMax: this.dif.vidaJog + PROGRESSO.nivel('coracao'), direcao: 1, pulosExtras: 0,
+      arma: PROGRESSO.inicial, invencivel: 0, recargaChinelo: 0, recargaEstilingue: 0, recargaEspecial: 0, deslizando: 0, caido: false,
     });
     return j;
   }
@@ -838,6 +859,10 @@ SOM.tocar('cuspe');
 
     this.inimigos.getChildren().slice().forEach(s => s.active && this.pensarInimigo(s, delta));
     this.atualizarMoedas();
+    this.dicas.forEach(d => {
+      if (d.visto) return;
+      if (vivos.some(j => Math.abs(j.x - d.img.x) < 90 && Math.abs(j.y - d.img.y) < 120)) { d.visto = true; this.mostrarDica(d); }
+    });
     this.itens.getChildren().forEach(it => { if (it.bloqueado && !this.physics.overlap(it.bloqueado, it)) it.bloqueado = null; });
 
     // câmera
@@ -924,7 +949,7 @@ SOM.tocar('cuspe');
     if (baixo && noChao && !j.descendo && this.pontes.getChildren().some(pt => Math.abs(pt.body.top - j.body.bottom) < 4 && j.x > pt.x && j.x < pt.x + pt.width)) {
       j.descendo = true; this.time.delayedCall(280, () => { j.descendo = false; });
     }
-    if (noChao) j.pulosExtras = j.id === 'nicolas' ? 1 : 0;
+    if (noChao) j.pulosExtras = j.id === 'nicolas' && !this.fase.semPoderes ? 1 : 0;
 
     // cambalhota: toque duplo rápido em A/D (←/→, ◀/▶ ou LB/RB no controle)
     j.recargaRolar = Math.max(0, (j.recargaRolar || 0) - delta);
@@ -939,8 +964,8 @@ SOM.tocar('cuspe');
     if (p && (p.L1 || p.R1) && !j.padOmbro) rolar = p.L1 ? -1 : 1;
     if (p) j.padOmbro = !!(p.L1 || p.R1);
     if (j.idx === 0 && this.toque && this.toque.rolar) { rolar = this.toque.rolar; this.toque.rolar = 0; }
-    if (rolar && j.recargaRolar === 0 && j.deslizando === 0) {
-      j.direcao = rolar; j.deslizando = 380; j.recargaRolar = 750;
+    if (rolar && j.recargaRolar === 0 && j.deslizando === 0 && !this.fase.semPoderes) {
+      j.direcao = rolar; j.deslizando = 380; j.recargaRolar = PROGRESSO.nivel('cambalhota') ? 350 : 750;
       SOM.tocar('cambalhota'); j.invencivel = Math.max(j.invencivel, 420); // atravessa inimigos e ataques sem se machucar
       this.tweens.add({ targets: j, angle: 360 * rolar, duration: 380, onComplete: () => j.setAngle(0) });
       this.poeira(j.x, j.body.bottom);
@@ -964,7 +989,8 @@ SOM.tocar('cuspe');
     }
 
     // especiais para ganhar tempo: Nícolas joga casca de banana; Theo solta o MEGA PUM
-    if (especial2 && j.recargaEspecial === 0) {
+    if (especial2 && j.recargaEspecial === 0 && this.fase.semPoderes) { if (!this.avisoPoder) { this.avisoPoder = true; this.texto(j.x, j.y - 50, 'Ainda sem superpoderes...', '#aaaaaa'); this.time.delayedCall(2000, () => this.avisoPoder = false); } }
+    else if (especial2 && j.recargaEspecial === 0) {
       if (j.id === 'nicolas') this.jogarBanana(j);
       else this.megaPum(j);
     }
@@ -981,7 +1007,8 @@ SOM.tocar('cuspe');
     this.inimigos.getChildren().slice().forEach(s => {
       if (s.active && Phaser.Geom.Rectangle.Overlaps(area, s.getBounds())) {
         const critico = Math.random() < 0.2;
-        this.acertar(s, critico ? 3 : 1, j.direcao);
+        const forca = PROGRESSO.nivel('chinelo');
+        this.acertar(s, (critico ? 3 : 1) + forca, j.direcao);
         if (critico) SOM.tocar('critico');
         if (critico) this.texto(s.x, s.y - 30, 'CHINELADA!', '#ffef5d');
       }
@@ -1106,7 +1133,7 @@ SOM.tocar('cuspe');
 
   // ---- especial do Nícolas: casca de banana
   jogarBanana(j) {
-    j.recargaEspecial = 2500; SOM.tocar('banana');
+    j.recargaEspecial = 2500 * (1 - 0.25 * PROGRESSO.nivel('especial')); SOM.tocar('banana');
     const b = this.bananas.create(j.x + 20 * j.direcao, j.y - 10, 'banana');
     b.setVelocity(260 * j.direcao, -280).setAngularVelocity(400 * j.direcao);
     b.usos = 3; b.dono = j;
@@ -1127,7 +1154,7 @@ SOM.tocar('cuspe');
 
   // ---- especial do Theo: MEGA PUM
   megaPum(j) {
-    j.recargaEspecial = 5000;
+    j.recargaEspecial = 5000 * (1 - 0.25 * PROGRESSO.nivel('especial'));
     const nuvem = this.add.circle(j.x, j.y, 30, 0x9bd94a, 0.55).setDepth(6);
     this.tweens.add({ targets: nuvem, radius: 200, alpha: 0, duration: 1100, onComplete: () => nuvem.destroy() });
     const fumaca = this.add.particles(j.x - 10 * j.direcao, j.y + 10, 'confete', {
@@ -1347,5 +1374,5 @@ window.game = new Phaser.Game({
   input: { gamepad: true },
   physics: { default: 'arcade', arcade: { gravity: { y: 1400 }, debug: false } },
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [Menu, Fase, Cena],
+  scene: [Menu, Fase, Cena, Loja],
 });

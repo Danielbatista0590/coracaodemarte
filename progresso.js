@@ -18,6 +18,8 @@ const PROGRESSO = (() => {
     liberar(n) { if (n > dados.mundo) { dados.mundo = n; salvar(); } },
     nivel(up) { return dados.up[up] || 0; },
     subir(up) { dados.up[up] = (dados.up[up] || 0) + 1; salvar(); },
+    get inicial() { return dados.inicial || 'estilingue'; },
+    set inicial(a) { dados.inicial = a; salvar(); },
     zerar() { dados = { moedas: 0, mundo: 0, up: {} }; salvar(); },
   };
 })();
