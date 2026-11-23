@@ -98,6 +98,30 @@ const PIXEL_PERNAS = {
   ],
 };
 
+// pixel art dos alienígenas (gerado por tools/inimigos.py). "." = transparente
+const INIMIGOS_PIXEL = {
+  sombra: { pal: { g: 0x4fd16b, G: 0x2f9a4a, o: 0x174d26, l: 0xb8ffc6, w: 0xffffff, k: 0x111111 }, frames: [
+    ['....................', '....................', '....................', '.......ooooo........', '......ogggggoo......', '.....ogggwwgggo.....', '.....ogggwkgggo.....', '....owwggggggwwo....', '...ogwkggggggwkgo...', '..oggggggggggggggo..', '..oggggggggggggggo..', '.oggggggggggggggggo.', '.oggggggggggggggggo.', '.oggggggggggggggggo.', '.oggggggggggggggggo.', '..oGGGGGGGGGGGGGGo..', '..oGGGGGGGGGGGGGGo..', '...oGGGGGGGGGGGGo...', '....oooGGGGGGooo....', '....g..oooooo..g....'],
+    ['....................', '....................', '....................', '....................', '.......o............', '......ogooooo.......', '.....ogggwwggoo.....', '....oggggwkggggo....', '....owwggggggwwo....', '...ogwkggggggwkgo...', '..oggggggggggggggo..', '.oggggggggggggggggo.', 'oggggggggggggggggggo', 'oggggggggggggggggggo', 'oggggggggggggggggggo', 'oggggggggggggggggggo', '.oGGGGGGGGGGGGGGGGo.', '..oGGGGGGGGGGGGGGo..', '...oooGGGGGGGGooo...', '......oooooooo......'],
+  ] },
+  morcego: { pal: { g: 0x6bd1ff, G: 0x3b8fc4, o: 0x1c4a6b, l: 0xe0f6ff, w: 0xffffff, k: 0x111111 }, frames: [
+    ['....................', '......oooooooo......', '....ooggggggggoo....', '...oggwwggggwwggo...', '..ogggwkggggwkgggo..', '.oggggggggggggggggo.', '.ooogoogooooogoogoo.', '....o..o.....o..o...', '...o....o...o....o..', '....o..o.....o..o...', '...o....o...o....o..', '....o..o.....o..o...', '...o....o...o....o..', '....................'],
+    ['....................', '......oooooooo......', '....ooggggggggoo....', '...oggwwggggwwggo...', '..ogggwkggggwkgggo..', '.oggggggggggggggggo.', '.oogoooogooogoooogo.', '...o....o...o....o..', '....o..o.....o..o...', '...o....o...o....o..', '....o..o.....o..o...', '...o....o...o....o..', '....o..o.....o..o...', '....................'],
+  ] },
+  cuspidor: { pal: { g: 0x8a4fd1, o: 0x3a1a5e, l: 0xd9b8ff, s: 0xb6ff6b, k: 0x1a0a10 }, frames: [
+    ['....................', '.......oooooo.......', '....oooggggggooo....', '...ogggggggllgggo...', '..oggllggggllggggo..', '..oggllggggggggggo..', '.oggggggllggggllggo.', '.oggggggllggggllggo.', '..ooooggggggggoooo..', '......osssssso......', '......osssssso......', '......osssssso......', '......osskksso......', '......oskkkkso......', '......oskkkkso......', '......osskksso......', '......osssssso......', '......osssssso......', '......osssssso......', '......oooooooo......'],
+    ['....................', '.....oooooooooo.....', '...ooggggggggggoo...', '..oggggggggllggggo..', '.ogggllggggllgggggo.', '.ogggllgggggggggggo.', 'ogggggggllggggllgggo', 'ogggggggllggggllgggo', '.oooooggggggggooooo.', '......osssssso......', '......osssssso......', '......osskksso......', '......oskkkkso......', '......okkkkkko......', '......okkkkkko......', '......oskkkkso......', '......osskksso......', '......osssssso......', '......osssssso......', '......oooooooo......'],
+  ] },
+  comedor: { pal: { g: 0x3fbf5f, G: 0x2a8a43, o: 0x123d1e, m: 0x7a1f3d, w: 0xffffff, k: 0x111111, y: 0xfff36b, l: 0xa6ffbb, a: 0x9dff4a }, frames: [
+    ['..............................', '..............................', '..............o.o.............', '...............o..............', '...............o..............', '...........oooogooo...........', '........oooggyyyyggooo........', '......oogggggykkygggggoo......', '.....ogglggggykkygggggggo.....', '....ogglgggggyyyyggggggggo....', '...oggggggggggggggggggggggo...', '...oggggggggggggggggggggggo...', '..oggggggggggggggggggggggggo..', '..oggggggggggggggggggggggggo..', '.oggggggggggggggggggggggggggo.', '.ogggggggggmmmmmmmmgggggggggo.', '.ogggggwwmmwwmmwwmmwwmggggggo.', '.oggggmwmmmwmmmwmmmwmmmmggggo.', '.ogggmmmmmmmmmmmmmmmmmmmmgggo.', '.ogggmmmmmmmmmmmmmmmmmmmmgggo.', '..oggmmmmmmmmmmmmmmmmmmmmggo..', '..oggmmmmmmmmmmmmmmmmmmmmggo..', '...oGGmmmmmmmmmmmmmmmmmmGGo...', '...oGGGGmmmmmmmmmmmmmmGGGGo...', '....oGGGGGGmmmmmmmmGGGGGGo....', '.....oGGGGGGGGGGGGGGGGGGo.....', '......ooGGGGGGGGGGGGGGoo......', '........oooGGGGGGGGooo........', '...........oooooooo...........'],
+    ['..............................', '..............................', '..............o.o.............', '...............o..............', '...............o..............', '..............................', '.........oooooooooooo.........', '.......ooggggykkyggggoo.......', '......oglggggykkyggggggo......', '....ooglgggggyyyygggggggoo....', '...oggggggggggggggggggggggo...', '...oggggggggggggggggggggggo...', '..oggggggggggggggggggggggggo..', '..oggggggggggggggggggggggggo..', '.oggggggggggggggggggggggggggo.', '.oggggggggggggggggggggggggggo.', '.oggggggggggggggggggggggggggo.', '.ogggggwwmmwwmmwwmmwwgggggggo.', '.oggggmwmmmwmmmwmmmwmmmmggggo.', '.ogggmmmmmmmmmmmmmmmmmmmmgggo.', '..oggmmmmmmmmmmmmmmmmmmmmggo..', '..ogggmmmmmmmmmmmmmmmmmmgggo..', '...oGGGGGmmmmmmmmmmmmGGGGGo...', '...oGGGGGGGGGGGGGGGGGGGGGGo...', '....ooGGGGGGGGGGGGGGGGGGoo....', '......oGGGGGGGGGGGGGGGGo......', '.......ooGGGGGGGGGGGGoo.......', '.........oooooooooooo.........', '..............................'],
+  ] },
+  agarrador: { pal: { g: 0x2fa88a, G: 0x1f7a63, o: 0x0d3a2e, t: 0x46c9a6, p: 0xff6bd5, k: 0x111111, l: 0xb5ffe9, w: 0xffffff }, frames: [
+    ['........................', '.........oooooo.........', '......oooggggggooo......', '.....olgggggggggggo.....', '....oggggggggggggggo....', '....oggggggggggggggo....', '...ogggppggggggppgggo...', '...ogggpkggggggpkgggo...', '...oggggggggggggggggo...', '...oggggggggggggggggo...', '....oggggggggggggggo....', '....oGGGGGGGGGGGGGGo.oo.', '...otoGGGGGGGGGGGGo.oo..', '...oo.ooGGGGGGGooGo.oo..', '...oo...oooooGo..oo.oo..', '....oo.oo....oo.oo...oo.', '....oo.oo....oo.oo...oo.', '....oo.oo....oo.oo...oo.', '...oo...oo..oo...oo.oo..', '...oo...oo..oo...oo.oo..', '...oo...oo..oo...oo.oo..', '....oo.oo....oo.oo...oo.', '....oo.oo....oo.oo...oo.', '........................'],
+    ['........................', '.........oooooo.........', '......oooggggggooo......', '.....olgggggggggggo.....', '....oggggggggggggggo....', '....oggggggggggggggo....', '...ogggppggggggppgggo...', '...ogggpkggggggpkgggo...', '...oggggggggggggggggo...', '...oggggggggggggggggo...', '....oggggggggggggggo....', '...oGGGGGGGGGGGGGGGooo..', '....oGGGGGGGGGGGGGo..oo.', '....otoGGGGGGGGoGo...oo.', '....oo.otGooGGo.oo...oo.', '...oo...oo..oo...oo.oo..', '...oo...oo..oo...oo.oo..', '...oo...oo..oo...oo.oo..', '....oo.oo....oo.oo...oo.', '....oo.oo....oo.oo...oo.', '....oo.oo....oo.oo...oo.', '...oo...oo..oo...oo.oo..', '...oo...oo..oo...oo.oo..', '........................'],
+  ] },
+};
+
 const CHARS = {
   // Nick: camiseta clara, calça jeans, tênis escuro de sola branca
   nicolas: { nome: 'Nícolas', habilidade: 'Casca de banana',
@@ -191,6 +215,11 @@ class Fase extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, MAPA_W, MAPA_H);
     this.cameras.main.setBackgroundColor('#0f2418');
 
+    // fundo: rochas escuras ao longe (parallax)
+    for (let i = 0; i < 40; i++) {
+      this.add.ellipse(Phaser.Math.Between(0, MAPA_W), Phaser.Math.Between(0, MAPA_H), Phaser.Math.Between(120, 320), Phaser.Math.Between(80, 220), 0x163626, 0.6)
+        .setScrollFactor(0.3).setDepth(-10);
+    }
     // fundo: bolhas de gosma flutuando ao longe
     for (let i = 0; i < 220; i++) {
       this.add.circle(Phaser.Math.Between(0, MAPA_W), Phaser.Math.Between(0, MAPA_H), Phaser.Math.Between(1, 3), 0x7dff95, 0.15).setScrollFactor(0.5);
@@ -221,6 +250,7 @@ class Fase extends Phaser.Scene {
       }
     });
     this.plataformas = [...this.chao.getChildren(), ...this.pontes.getChildren()];
+    this.decorar();
 
     // jogadores
     const ini = pecas.find(p => p.ch === 'P');
@@ -309,6 +339,28 @@ class Fase extends Phaser.Scene {
   }
 
   // botões na tela para celular/tablet (controlam o Jogador 1)
+  // plantas brilhantes, cristais e gosma pingando do teto
+  decorar() {
+    const vazio = (r, c) => MAPA[r] && (MAPA[r][c] === ' ' || 'gvcmaGVCMATPE'.includes(MAPA[r][c]));
+    MAPA.forEach((linha, r) => [...linha].forEach((ch, c) => {
+      if (ch !== '#') return;
+      const x = c * T + T / 2;
+      if (r > 0 && vazio(r - 1, c) && Math.random() < 0.22) {
+        const tipo = Phaser.Utils.Array.GetRandom(['planta', 'planta', 'cristal', 'cogumelinho']);
+        const d = this.add.image(x + Phaser.Math.Between(-8, 8), r * T + 2, tipo).setOrigin(0.5, 1).setDepth(-1).setFlipX(Math.random() < 0.5);
+        if (tipo !== 'cogumelinho') this.tweens.add({ targets: d, alpha: 0.55, duration: Phaser.Math.Between(900, 1600), yoyo: true, repeat: -1 });
+      }
+      if (vazio(r + 1, c) && r > 0 && Math.random() < 0.1) {
+        const e = this.add.image(x, (r + 1) * T, 'estalactite').setOrigin(0.5, 0).setDepth(-1);
+        if (Math.random() < 0.4) this.time.addEvent({ delay: Phaser.Math.Between(1800, 4000), loop: true, callback: () => {
+          if (!this.cameras.main.worldView.contains(x, e.y)) return;
+          const gota = this.add.image(x, e.y + 14, 'gota_gosma').setDepth(-1);
+          this.tweens.add({ targets: gota, y: e.y + 260, alpha: 0, duration: 900, ease: 'Quad.easeIn', onComplete: () => gota.destroy() });
+        } });
+      }
+    }));
+  }
+
   criarControlesToque() {
     this.toque = { esq: false, dir: false, cima: false, baixo: false, pulo: false, chinelo: false, estilingue: false, especial: false };
     this.botoes = [];
@@ -366,29 +418,29 @@ class Fase extends Phaser.Scene {
     g.generateTexture('escada', 32, 32).clear();
     g.fillStyle(0xffffff).fillRect(0, 0, 6, 6); g.generateTexture('confete', 6, 6).clear();
     g.fillStyle(0xd9d2c5).fillCircle(5, 5, 5); g.generateTexture('pedra', 10, 10).clear();
-    // alien gosmento comum: gota verde com 3 olhos
-    g.fillStyle(0x4fd16b).fillEllipse(20, 26, 40, 28).fillCircle(20, 16, 14)
-     .fillStyle(0x7dff95).fillCircle(14, 12, 4).fillStyle(0xffffff).fillCircle(10, 18, 4).fillCircle(20, 14, 4).fillCircle(30, 18, 4)
-     .fillStyle(0x000000).fillCircle(10, 18, 2).fillCircle(20, 14, 2).fillCircle(30, 18, 2);
-    g.generateTexture('sombra', 40, 40).clear();
-    // alien voador: água-viva gosmenta
-    g.fillStyle(0x6bd1ff).fillEllipse(20, 10, 34, 18).fillRect(8, 12, 4, 12).fillRect(18, 12, 4, 14).fillRect(28, 12, 4, 12)
-     .fillStyle(0xffffff).fillCircle(14, 8, 3).fillCircle(26, 8, 3).fillStyle(0x000000).fillCircle(14, 8, 1.5).fillCircle(26, 8, 1.5);
-    g.generateTexture('morcego', 40, 26).clear();
-    // cuspidor: cogumelo alien
-    g.fillStyle(0x8a4fd1).fillEllipse(20, 14, 40, 22).fillStyle(0xb6ff6b).fillRect(12, 20, 16, 18)
-     .fillStyle(0x000000).fillCircle(20, 28, 4);
-    g.generateTexture('cuspidor', 40, 40).clear();
-    // comedor: bocão enorme
-    g.fillStyle(0x3fbf5f).fillEllipse(30, 32, 60, 52).fillStyle(0x7a1f3d).fillEllipse(30, 38, 42, 22)
-     .fillStyle(0xffffff).fillTriangle(12, 30, 18, 30, 15, 37).fillTriangle(24, 28, 30, 28, 27, 36).fillTriangle(36, 28, 42, 28, 39, 36)
-     .fillStyle(0xfff36b).fillCircle(30, 12, 7).fillStyle(0x000000).fillCircle(30, 12, 3);
-    g.generateTexture('comedor', 60, 58).clear();
-    // agarrador: corpo com tentáculos longos
-    g.fillStyle(0x2fa88a).fillEllipse(24, 18, 34, 30).fillRect(4, 22, 6, 24).fillRect(38, 22, 6, 24).fillRect(20, 28, 8, 20)
-     .fillStyle(0xff6bd5).fillCircle(17, 15, 4).fillCircle(31, 15, 4);
-    g.generateTexture('agarrador', 48, 48).clear();
+    // alienígenas em pixel art: tipo_0 e tipo_1 (animação); "tipo" = primeiro quadro
+    Object.entries(INIMIGOS_PIXEL).forEach(([tipo, d]) => {
+      d.frames.forEach((linhas, f) => {
+        linhas.forEach((linha, y) => [...linha].forEach((ch, x) => {
+          if (d.pal[ch] !== undefined) g.fillStyle(d.pal[ch]).fillRect(x * 2, y * 2, 2, 2);
+        }));
+        const larg = linhas[0].length * 2, alt = linhas.length * 2;
+        g.generateTexture(tipo + '_' + f, larg, alt);
+        if (f === 0) g.generateTexture(tipo, larg, alt);
+        g.clear();
+      });
+    });
     g.fillStyle(0x9dff4a).fillCircle(7, 7, 7); g.generateTexture('gosma', 14, 14).clear();
+    // decoração do cenário
+    g.fillStyle(0x2f7a3e).fillRect(9, 8, 2, 16).fillRect(4, 14, 6, 2).fillRect(10, 11, 6, 2).fillStyle(0x9dff4a).fillCircle(10, 6, 5).fillStyle(0xe6ffd0).fillCircle(9, 5, 2);
+    g.generateTexture('planta', 20, 24).clear();
+    g.fillStyle(0x6bd1ff).fillTriangle(4, 22, 8, 4, 12, 22).fillTriangle(10, 22, 15, 10, 19, 22).fillStyle(0xd6f4ff).fillTriangle(7, 20, 8, 8, 9, 20);
+    g.generateTexture('cristal', 22, 22).clear();
+    g.fillStyle(0xe8e0c8).fillRect(6, 8, 4, 8).fillStyle(0xff6bd5).fillEllipse(8, 7, 16, 9).fillStyle(0xffffff).fillCircle(5, 6, 1.5).fillCircle(11, 5, 1.5);
+    g.generateTexture('cogumelinho', 16, 16).clear();
+    g.fillStyle(0x7dff95, 0.8).fillTriangle(4, 0, 20, 0, 12, 14).fillCircle(12, 13, 3);
+    g.generateTexture('estalactite', 24, 18).clear();
+    g.fillStyle(0x9dff4a).fillCircle(3, 4, 3).fillTriangle(0, 4, 6, 4, 3, 0); g.generateTexture('gota_gosma', 6, 8).clear();
     g.fillStyle(0xffffff).fillCircle(9, 9, 9).fillStyle(0x222222).fillCircle(9, 9, 3).fillCircle(3, 6, 2).fillCircle(15, 6, 2).fillCircle(5, 14, 2).fillCircle(13, 14, 2);
     g.generateTexture('bola', 18, 18).clear();
     g.fillStyle(0x8892a0).fillRect(6, 8, 20, 8).fillStyle(0x5a6270).fillRect(0, 4, 12, 2).fillRect(20, 4, 12, 2).fillRect(5, 4, 2, 5).fillRect(25, 4, 2, 5)
@@ -479,6 +531,10 @@ SOM.tocar('cuspe');
   }
 
   pensarInimigo(s, delta) {
+    // animação de 2 quadros (mais rápida quando está bravo/andando)
+    if (!s.base) { s.base = s.tipo === 'chefao' ? 'sombra' : s.tipo; s.fase = Phaser.Math.Between(0, 600); }
+    const ritmo = s.atordoado > 0 ? 700 : (s.tipo === 'comedor' && s.vitima ? 120 : 280);
+    s.setTexture(s.base + '_' + (Math.floor((this.time.now + s.fase) / ritmo) % 2));
     if (s.atordoado > 0) {
       s.atordoado -= delta;
       if (s.empurrao > 0) s.empurrao -= delta; else s.setVelocityX(0);
