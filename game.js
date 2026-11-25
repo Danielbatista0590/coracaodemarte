@@ -656,6 +656,13 @@ class Fase extends Phaser.Scene {
     // câmera segue o ponto médio entre os jogadores
     this.alvoCamera = this.add.zone(0, 0, 1, 1);
     this.cameras.main.startFollow(this.alvoCamera, true, 0.1, 0.1);
+    // tela dividida no co-op: segunda câmera (metade direita) e uma câmera só para o painel (HUD, botões, mensagens)
+    this.alvoCamera2 = this.add.zone(0, 0, 1, 1);
+    this.cam2 = this.cameras.add(W / 2, 0, W / 2, H).setBounds(0, 0, this.mapaW, this.mapaH).setBackgroundColor(this.fase.fundo).setVisible(false);
+    this.cam2.startFollow(this.alvoCamera2, true, 0.1, 0.1);
+    this.camUI = this.cameras.add(0, 0, W, H);
+    this.divisoria = this.add.rectangle(W / 2, H / 2 + 20, 4, H - 40, 0x000000).setScrollFactor(0).setDepth(50).setVisible(false);
+    this.dividida = false;
 
     SOM.musica(this.fase.musica);
     this.mostrarTitulo();
@@ -674,6 +681,30 @@ class Fase extends Phaser.Scene {
   }
 
   // botões na tela para celular/tablet (controlam o Jogador 1)
+  dividirTela(sim) {
+    this.dividida = sim;
+    const cam = this.cameras.main;
+    if (sim) {
+      cam.setViewport(0, 0, W / 2, H);
+      this.cam2.setVisible(true);
+      this.cam2.centerOn(this.alvoCamera2.x, this.alvoCamera2.y);
+    } else {
+      cam.setViewport(0, 0, W, H);
+      this.cam2.setVisible(false);
+    }
+    this.divisoria.setVisible(sim);
+  }
+
+  // cada objeto aparece só nas câmeras certas: o painel (fixo na tela) só na câmera do painel
+  separarCamadas() {
+    const mundo = this.cameras.main.id | this.cam2.id, painel = this.camUI.id;
+    this.children.list.forEach(o => {
+      if (o._camada !== undefined) return;
+      o._camada = o.scrollFactorX === 0 ? 1 : 0;
+      o.cameraFilter |= o._camada ? mundo : painel;
+    });
+  }
+
   pausar() {
     if (this.acabou || this.scene.isPaused()) return;
     this.scene.pause();
@@ -898,16 +929,16 @@ class Fase extends Phaser.Scene {
       s.vida = 3; s.velocidade = 0; s.recarga = Phaser.Math.Between(800, 2000);
       s.body.setSize(36, 26).setOffset(4, 12);
     } else if (tipo === 'cerebro') {
-      s.vida = s.vidaMax = 45; s.velocidade = 70; s.setScale(2.4); s.body.setAllowGravity(false);
+      s.vida = s.vidaMax = 60; s.velocidade = 80; s.setScale(2.4); s.body.setAllowGravity(false);
       s.body.setSize(66, 50).setOffset(7, 2); s.recarga = 2200; s.ativado = false; s.casaY = y; s.estado = 'flutuar';
       s.escudo = true; s.ataques = 0; s.relogio = 0;
       s.bolha = this.add.circle(x, y, 95, 0x6bd1ff, 0.18).setStrokeStyle(4, 0xbfeeff, 0.7).setDepth(5);
       this.tweens.add({ targets: s.bolha, scale: 1.06, duration: 600, yoyo: true, repeat: -1 });
     } else if (tipo === 'rainha') {
-      s.vida = s.vidaMax = 40; s.velocidade = 110; s.setScale(2.2); s.body.setAllowGravity(false);
+      s.vida = s.vidaMax = 55; s.velocidade = 130; s.setScale(2.2); s.body.setAllowGravity(false);
       s.body.setSize(60, 40).setOffset(10, 2); s.recarga = 2500; s.ativado = false; s.casaY = y; s.relogio = 0; s.estado = 'flutuar';
     } else if (tipo === 'chefao') {
-      s.vida = s.vidaMax = 30; s.velocidade = 90; s.setScale(2.6).setTint(0x2e9e4a);
+      s.vida = s.vidaMax = 45; s.velocidade = 105; s.setScale(2.6).setTint(0x2e9e4a);
       s.body.setSize(36, 32).setOffset(2, 6); s.recarga = 2000; s.ativado = false;
     }
     s.vida = Math.max(1, Math.round(s.vida * this.dif.vidaInim));
@@ -932,7 +963,7 @@ class Fase extends Phaser.Scene {
       s.setFlipX(s.body.velocity.x < 0);
       s.recarga -= delta;
       if (s.recarga <= 0 && alvo) {
-        s.recarga = raiva ? 1800 : 2600;
+        s.recarga = raiva ? 1300 : 2000;
         const r = Math.random();
         if (r < 0.4) { // chuva de gosma
           for (let i = -2; i <= 2; i++) this.time.delayedCall((i + 2) * 120, () => s.active && this.cuspir(s, { x: s.x + i * 70, y: s.y + 300 }, 260));
@@ -965,7 +996,7 @@ class Fase extends Phaser.Scene {
       }
     } else if (s.estado === 'cansada') { // parada perto do chão: hora do chinelo!
       s.relogioEstado += delta; s.setVelocity(0, 0);
-      if (s.relogioEstado > (raiva ? 1500 : 2200)) { s.estado = 'voltar'; }
+      if (s.relogioEstado > (raiva ? 1100 : 1700)) { s.estado = 'voltar'; }
     } else if (s.estado === 'voltar') {
       s.setVelocity(0, -220);
       if (s.y <= s.casaY) s.estado = 'flutuar';
@@ -988,7 +1019,7 @@ class Fase extends Phaser.Scene {
       s.setVelocity((alvoX - s.x) * 1.5, (s.casaY + Math.sin(s.relogio / 500) * 15 - s.y) * 3);
       s.recarga -= delta;
       if (s.recarga <= 0 && alvo) {
-        s.recarga = raiva ? 1700 : 2400;
+        s.recarga = raiva ? 1300 : 2000;
         if (s.ataques >= 2) { s.ataques = 0; s.estado = 'descer'; this.texto(s.x, s.y - 110, 'Ufa... cansei!', '#ffe14d'); return; }
         s.ataques++;
         const at = Phaser.Utils.Array.GetRandom(this.inimigos.countActive() < 7 ? ['onda', 'raios', 'ovos'] : ['onda', 'raios']);
@@ -1000,7 +1031,8 @@ class Fase extends Phaser.Scene {
           });
         } else if (at === 'raios') {
           const xs = [alvo.j.x, alvo.j.x + Phaser.Math.Between(150, 300) * (Math.random() < 0.5 ? -1 : 1)];
-          if (raiva) xs.push(Phaser.Math.Between(38 * T, this.mapaW - 3 * T));
+          xs.push(Phaser.Math.Between(38 * T, this.mapaW - 3 * T));
+          if (raiva) xs.push(alvo.j.x + Phaser.Math.Between(-80, 80));
           xs.forEach(x => this.raio(x));
         } else {
           for (let i = 0; i < 2; i++) { const f = this.criarInimigo(s.x + (i ? 50 : -50), s.y + 60, Math.random() < 0.5 ? 'sombra' : 'saltador'); f.vida = 2; this.texto(f.x, f.y, 'PLOP!', '#ff8fb8'); }
@@ -1012,7 +1044,7 @@ class Fase extends Phaser.Scene {
       if (s.y >= chao - 80) { s.estado = 'exposto'; s.relogioEstado = 0; s.escudo = false; s.setVelocity(0, 0); SOM.tocar('escapou'); this.texto(s.x, s.y - 110, 'SEM ESCUDO! ATAQUEM!', '#9dff4a'); }
     } else if (s.estado === 'exposto') {
       s.relogioEstado += delta; s.setVelocity(0, 0);
-      if (s.relogioEstado > (raiva ? 2800 : 3600)) { s.escudo = true; s.estado = 'subir'; }
+      if (s.relogioEstado > (raiva ? 2200 : 3000)) { s.escudo = true; s.estado = 'subir'; }
     } else if (s.estado === 'subir') {
       s.setVelocity(0, -200);
       if (s.y <= s.casaY) s.estado = 'flutuar';
@@ -1142,7 +1174,7 @@ SOM.tocar('cuspe');
       const raiva = s.vida < s.vidaMax / 2; // metade da vida: fica mais rápido
       if (alvo && s.body.blocked.down) s.setVelocityX(Math.sign(alvo.j.x - s.x) * s.velocidade * (raiva ? 1.7 : 1));
       if (alvo && s.recarga <= 0 && s.body.blocked.down) {
-        s.recarga = raiva ? 1300 : 2000;
+        s.recarga = raiva ? 950 : 1600;
         if (Math.random() < 0.5) {
           // aviso: o Gosmão se espreme antes de pular
           s.setVelocityX(0); s.preparando = true;
@@ -1151,7 +1183,11 @@ SOM.tocar('cuspe');
             s.setVelocityY(-650); s.pulando = true;
           } });
         }
-        else { for (let a = -1; a <= 1; a++) this.cuspir(s, { x: alvo.j.x, y: alvo.j.y + a * 90 }, 300); }
+        else {
+          const n = raiva ? 2 : 1; // com raiva cospe 5 gosmas
+          for (let a = -n; a <= n; a++) this.cuspir(s, { x: alvo.j.x + a * 40, y: alvo.j.y + a * 80 }, raiva ? 380 : 320);
+          if (raiva && this.inimigos.countActive() < 7) { const f = this.criarInimigo(s.x, s.y - 40, 'sombra'); f.vida = 2; f.setScale(0.8); }
+        }
       }
       if (s.pulando && s.body.blocked.down && s.body.velocity.y >= 0) {
         s.pulando = false; SOM.tocar('tremor'); this.cameras.main.shake(200, 0.012);
@@ -1202,27 +1238,27 @@ SOM.tocar('cuspe');
     this.atualizarItens();
 
     // câmera
+    const olharCima = this.chefao && this.chefao.active && this.chefao.ativado && this.chefao.voa ? (this.chefao.tipo === 'cerebro' ? 170 : 110) : 0;
     if (vivos.length) {
-      // a câmera segue o primeiro jogador vivo; o outro acompanha
       this.alvoCamera.x = vivos[0].x;
-      // na luta contra a Rainha (que voa), a câmera olha mais para cima
-      const olharCima = this.chefao && this.chefao.active && this.chefao.ativado && this.chefao.voa ? (this.chefao.tipo === 'cerebro' ? 170 : 110) : 0;
       this.alvoCamera.y = vivos[0].y - olharCima;
     }
-    // co-op: quem ficar fora da tela por 1,5 s é trazido para perto do parceiro
+    // co-op: se os dois se afastam, a tela se divide; quando se aproximam, junta de novo
     if (vivos.length > 1) {
-      const vista = this.cameras.main.worldView;
-      vivos.slice(1).forEach(j => {
-        const fora = !Phaser.Geom.Rectangle.Contains(vista, j.x, j.y);
-        j.foraTela = fora ? (j.foraTela || 0) + delta : 0;
-        if (j.foraTela > 1500 && !j.preso) {
-          const amigo = vivos[0];
-          j.foraTela = 0; j.escalando = false; j.body.setAllowGravity(true);
-          j.setPosition(amigo.x, amigo.y - 40).setVelocity(0, 0);
-          j.invencivel = 1000; this.poeira(j.x, j.y);
-        }
-      });
-    }
+      const [a, b] = vivos;
+      const dx = Math.abs(a.x - b.x), dy = Math.abs(a.y - b.y);
+      if (!this.dividida && (dx > W * 0.8 || dy > H * 0.75)) this.dividirTela(true);
+      else if (this.dividida && dx < W * 0.4 && dy < H * 0.4) this.dividirTela(false);
+      if (this.dividida) {
+        // quem está mais à esquerda fica na metade esquerda
+        const [esq, dir] = a.x <= b.x ? [a, b] : [b, a];
+        this.alvoCamera.x = esq.x; this.alvoCamera.y = esq.y - olharCima;
+        this.alvoCamera2.x = dir.x; this.alvoCamera2.y = dir.y - olharCima;
+      } else {
+        this.alvoCamera.x = (a.x + b.x) / 2; this.alvoCamera.y = (a.y + b.y) / 2 - olharCima;
+      }
+    } else if (this.dividida) this.dividirTela(false);
+    this.separarCamadas();
 
     // caiu no buraco
     this.jogadores.forEach(j => { if (!j.caido && j.y > this.mapaH + 60) this.cair(j); });
@@ -1289,7 +1325,7 @@ SOM.tocar('cuspe');
     if (baixo && noChao && !j.descendo && this.time.now > (j.travaDescida || 0) && this.pontes.getChildren().some(pt => Math.abs(pt.body.top - j.body.bottom) < 4 && j.x > pt.x && j.x < pt.x + pt.width)) {
       j.descendo = true; this.time.delayedCall(280, () => { j.descendo = false; });
     }
-    if (noChao) j.pulosExtras = j.id === 'nicolas' && !this.fase.semPoderes ? 1 : 0;
+    if (noChao) j.pulosExtras = !this.fase.semPoderes ? 1 : 0; // os dois gêmeos têm pulo duplo
 
     // cambalhota: toque duplo rápido em A/D (←/→, ◀/▶ ou LB/RB no controle)
     j.recargaRolar = Math.max(0, (j.recargaRolar || 0) - delta);
@@ -1359,6 +1395,11 @@ SOM.tocar('cuspe');
         const critico = Math.random() < 0.2;
         const forca = PROGRESSO.nivel('chinelo');
         this.acertar(s, (critico ? 3 : 1) + forca, j.direcao);
+        if (s.active && !s.chefe && !s.vitima) {          // chinelada empurra para longe e deixa tonto um instante
+          s.setVelocity(430 * j.direcao, -230);
+          s.atordoado = Math.max(s.atordoado || 0, 550); s.empurrao = 550;
+        }
+        j.invencivel = Math.max(j.invencivel, 250);
         if (critico) SOM.tocar('critico');
         if (critico) this.texto(s.x, s.y - 30, 'CHINELADA!', '#ffef5d');
       }
@@ -1521,18 +1562,27 @@ SOM.tocar('cuspe');
 
   // ---- especial do Nícolas: casca de banana
   jogarBanana(j) {
-    j.recargaEspecial = 2500 * (1 - 0.25 * PROGRESSO.nivel('especial')); SOM.tocar('banana');
+    j.recargaEspecial = 1800 * (1 - 0.25 * PROGRESSO.nivel('especial')); SOM.tocar('banana');
     const b = this.bananas.create(j.x + 20 * j.direcao, j.y - 10, 'banana');
     b.setVelocity(260 * j.direcao, -280).setAngularVelocity(400 * j.direcao);
-    b.usos = 3; b.dono = j;
-    this.time.delayedCall(8000, () => b.active && b.destroy());
+    b.usos = 5; b.dono = j; b.body.setSize(44, 22);   // área maior para pisar
+    this.time.delayedCall(14000, () => b.active && b.destroy());
   }
 
   escorregar(s, b) {
-    if (!b.active || !s.active || s.atordoado > 0 || s.chefe || s.tipo === 'morcego' || s.tipo === 'rainha' || s.vitima) return;
+    if (!b.active || !s.active || s.atordoado > 0 || s.voa || s.tipo === 'morcego' || s.vitima) return;
     const dir = s.x >= b.dono.x ? 1 : -1; // voa para LONGE do Nícolas
-    s.setVelocity(420 * dir, -520);
-    s.atordoado = 2200; s.empurrao = 900;
+    if (s.chefe) { // o Gosmão também escorrega (uma vez por casca), fica tonto um pouco
+      if (b.chefeJaEscorregou) return; b.chefeJaEscorregou = true;
+      s.atordoado = 1600; s.empurrao = 500; s.setVelocity(250 * dir, -300);
+      SOM.tocar('escorregar'); this.texto(s.x, s.y - 90, 'O GOSMÃO ESCORREGOU!', '#ffe14d'); this.desmaiar(s, 0);
+      this.acertar(s, 3, dir); s.atordoado = 1600;
+      b.usos--; if (b.usos <= 0) b.destroy(); return;
+    }
+    s.setVelocity(480 * dir, -560);
+    s.atordoado = 3200; s.empurrao = 1000;
+    this.acertar(s, 1, dir); if (!s.active) { b.usos--; if (b.usos <= 0) b.destroy(); return; }
+    s.atordoado = 3200; s.empurrao = 1000; s.setVelocity(480 * dir, -560);
     this.tweens.add({ targets: s, angle: 360 * dir, duration: 700, onComplete: () => s.active && s.setAngle(180) });
     SOM.tocar('escorregar');
     this.texto(s.x, s.y - 40, 'ESCORREGOU!', '#ffe14d');
